@@ -106,12 +106,41 @@ app.post("/generate-itinerary", async (req, res) => {
         const reply = response.data.choices[0].message.content;
         let itinerary;
         try {
-            // Extract JSON from the response
-            const jsonMatch = reply.match(/\[[\s\S]*\]/);
+            // First try to find JSON array in the response
+            const jsonMatch = reply.match(/\[\s*\{[\s\S]*\}\s*\]/);
             if (jsonMatch) {
                 itinerary = JSON.parse(jsonMatch[0]);
             } else {
-                throw new Error(language === 'ar' ? 'تنسيق الاستجابة غير صالح' : 'Invalid response format');
+                // If no JSON array found, try to parse the entire response
+                try {
+                    itinerary = JSON.parse(reply);
+                } catch {
+                    // If still can't parse, create a structured response from the text
+                    const lines = reply.split('\n').filter(line => line.trim());
+                    itinerary = [];
+                    let currentDay = null;
+                    
+                    for (const line of lines) {
+                        if (line.toLowerCase().includes('day') || line.includes('اليوم')) {
+                            const dayNum = parseInt(line.match(/\d+/)?.[0] || '1');
+                            currentDay = {
+                                day: dayNum,
+                                activities: []
+                            };
+                            itinerary.push(currentDay);
+                        } else if (currentDay && line.trim()) {
+                            const activity = {
+                                title: line.trim(),
+                                description: ''
+                            };
+                            currentDay.activities.push(activity);
+                        }
+                    }
+                    
+                    if (itinerary.length === 0) {
+                        throw new Error(language === 'ar' ? 'لم يتم العثور على خطة سفر صالحة' : 'No valid travel plan found');
+                    }
+                }
             }
         } catch (error) {
             console.error(`[${requestId}] Error parsing itinerary:`, error);
@@ -131,10 +160,19 @@ app.post("/generate-itinerary", async (req, res) => {
         const errorTime = Date.now() - startTime;
         console.error(`[${requestId}] Error after ${errorTime}ms:`, error.response?.data || error.message);
         
+        let errorMessage = error.message;
+        if (error.response?.data?.error?.message) {
+            errorMessage = error.response.data.error.message;
+        } else if (error.response?.data) {
+            errorMessage = typeof error.response.data === 'string' 
+                ? error.response.data 
+                : JSON.stringify(error.response.data);
+        }
+        
         res.status(500).json({ 
             error: {
-                message: error.response?.data?.error?.message || error.message,
-                details: error.response?.data || error.stack,
+                message: errorMessage,
+                details: error.stack,
                 requestId,
                 processingTime: errorTime,
                 timestamp: new Date().toISOString()
