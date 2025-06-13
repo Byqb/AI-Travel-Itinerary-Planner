@@ -240,6 +240,3 @@ app.listen(PORT, () => {
     console.log(`   POST /api/generate-itinerary - Generate travel itinerary`);
     console.log(`   GET /api/health - Check server health`);
 });
-
-// Export the Express API
-module.exports = app;
