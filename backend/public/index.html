@@ -472,7 +472,7 @@
             itineraryContainer.innerHTML = '';
 
             try {
-                const response = await fetch('/api/generate-itinerary', {
+                const response = await fetch('/api/itinerary', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -486,12 +486,12 @@
                     })
                 });
 
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || 'Failed to generate itinerary');
                 }
 
+                const data = await response.json();
                 displayItinerary(data.itinerary);
             } catch (error) {
                 const currentLang = document.documentElement.lang;
