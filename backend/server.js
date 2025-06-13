@@ -79,25 +79,61 @@ app.post("/generate-itinerary", async (req, res) => {
     
     try {
         const { startDate, endDate, destination, preferences, language } = req.body;
+        
+        // Validate required fields
+        if (!startDate || !endDate || !destination) {
+            throw new Error(language === 'ar' ? 'جميع الحقول مطلوبة' : 'All fields are required');
+        }
+
+        // Validate dates
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            throw new Error(language === 'ar' ? 'تواريخ غير صالحة' : 'Invalid dates');
+        }
+        if (start > end) {
+            throw new Error(language === 'ar' ? 'تاريخ البداية يجب أن يكون قبل تاريخ النهاية' : 'Start date must be before end date');
+        }
+
         console.log(`[${requestId}] Generating itinerary for ${destination} in ${language}`);
 
         const prompt = generatePrompt(startDate, endDate, destination, preferences, language);
         
-        const response = await axios.post(
-            API_URL,
-            {
-                model: MODEL,
-                messages: [{ role: "user", content: prompt }]
-            },
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${API_KEY}`,
-                    "HTTP-Referer": "http://localhost:3000",
-                    "X-Title": "ai-travel-planner"
+        let response;
+        try {
+            response = await axios.post(
+                API_URL,
+                {
+                    model: MODEL,
+                    messages: [{ role: "user", content: prompt }]
+                },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${API_KEY}`,
+                        "HTTP-Referer": "http://localhost:3000",
+                        "X-Title": "ai-travel-planner"
+                    },
+                    timeout: 30000 // 30 second timeout
                 }
-            }
-        );
+            );
+        } catch (apiError) {
+            console.error(`[${requestId}] API Error:`, apiError.response?.data || apiError.message);
+            throw new Error(
+                language === 'ar' 
+                    ? 'فشل الاتصال بخدمة الذكاء الاصطناعي. يرجى المحاولة مرة أخرى لاحقاً.'
+                    : 'Failed to connect to AI service. Please try again later.'
+            );
+        }
+
+        // Validate API response
+        if (!response.data || !response.data.choices || !response.data.choices[0]?.message?.content) {
+            throw new Error(
+                language === 'ar'
+                    ? 'استجابة غير صالحة من خدمة الذكاء الاصطناعي'
+                    : 'Invalid response from AI service'
+            );
+        }
 
         const processingTime = Date.now() - startTime;
         console.log(`[${requestId}] Itinerary generated in ${processingTime}ms`);
@@ -142,6 +178,21 @@ app.post("/generate-itinerary", async (req, res) => {
                     }
                 }
             }
+
+            // Validate itinerary structure
+            if (!Array.isArray(itinerary) || itinerary.length === 0) {
+                throw new Error(language === 'ar' ? 'تنسيق الخطة غير صالح' : 'Invalid plan format');
+            }
+
+            // Ensure each day has required fields
+            itinerary = itinerary.map(day => ({
+                day: day.day || 1,
+                activities: Array.isArray(day.activities) ? day.activities.map(activity => ({
+                    title: activity.title || '',
+                    description: activity.description || ''
+                })) : []
+            }));
+
         } catch (error) {
             console.error(`[${requestId}] Error parsing itinerary:`, error);
             throw new Error(language === 'ar' ? 'فشل في تحليل استجابة الذكاء الاصطناعي' : 'Failed to parse AI response');
@@ -158,21 +209,11 @@ app.post("/generate-itinerary", async (req, res) => {
         });
     } catch (error) {
         const errorTime = Date.now() - startTime;
-        console.error(`[${requestId}] Error after ${errorTime}ms:`, error.response?.data || error.message);
-        
-        let errorMessage = error.message;
-        if (error.response?.data?.error?.message) {
-            errorMessage = error.response.data.error.message;
-        } else if (error.response?.data) {
-            errorMessage = typeof error.response.data === 'string' 
-                ? error.response.data 
-                : JSON.stringify(error.response.data);
-        }
+        console.error(`[${requestId}] Error after ${errorTime}ms:`, error.message);
         
         res.status(500).json({ 
             error: {
-                message: errorMessage,
-                details: error.stack,
+                message: error.message,
                 requestId,
                 processingTime: errorTime,
                 timestamp: new Date().toISOString()
