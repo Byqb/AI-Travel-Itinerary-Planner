@@ -472,7 +472,7 @@
             itineraryContainer.innerHTML = '';
 
             try {
-                const response = await fetch('/api/itinerary', {
+                const response = await fetch('/generate-itinerary', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -486,18 +486,22 @@
                     })
                 });
 
+                const data = await response.json();
+                
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || 'Failed to generate itinerary');
+                    throw new Error(data.error?.message || 'Failed to generate itinerary');
                 }
 
-                const data = await response.json();
+                if (data.error) {
+                    throw new Error(data.error.message || 'Failed to generate itinerary');
+                }
+
                 displayItinerary(data.itinerary);
             } catch (error) {
                 const currentLang = document.documentElement.lang;
                 const errorPrefix = currentLang === 'ar' ? '❌ حدث خطأ:' : '❌ Error:';
                 itineraryContainer.innerHTML = `
-                    <div class="error-message">
+                    <div class="error-message" style="color: #ef4444; padding: 1rem; background: #fee2e2; border-radius: 0.5rem; margin: 1rem 0;">
                         ${errorPrefix} ${error.message}
                     </div>
                 `;
