@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 
 // ✅ بيانات OpenRouter
 const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const API_KEY = "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";
+const API_KEY = "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";
 const MODEL = "google/gemma-3n-e4b-it:free";
 
 // Middleware
