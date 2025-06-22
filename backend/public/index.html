@@ -4,279 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Travel Planner</title>
-    <style>
-        :root {
-            --bg-color: #f3f4f6;
-            --text-color: #1f2937;
-            --panel-bg: #ffffff;
-            --chat-bg: #f9fafb;
-            --user-msg-bg: #e3f2fd;
-            --ai-msg-bg: #f5f5f5;
-            --border-color: #e5e7eb;
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --shadow-color: rgba(0, 0, 0, 0.1);
-        }
-
-        [data-theme="dark"] {
-            --bg-color: #1f2937;
-            --text-color: #f3f4f6;
-            --panel-bg: #374151;
-            --chat-bg: #4b5563;
-            --user-msg-bg: #1e40af;
-            --ai-msg-bg: #4b5563;
-            --border-color: #4b5563;
-            --primary-color: #3b82f6;
-            --primary-hover: #60a5fa;
-            --shadow-color: rgba(0, 0, 0, 0.3);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: system-ui, -apple-system, sans-serif;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .container {
-            max-width: 1152px;
-            margin: 0 auto;
-            padding: 1rem;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .title {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-
-        .header-controls {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .lang-toggle {
-            background: none;
-            border: 1px solid var(--border-color);
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            color: var(--text-color);
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        .lang-toggle:hover {
-            background-color: var(--chat-bg);
-        }
-
-        .theme-toggle {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-color);
-            transition: background-color 0.3s;
-        }
-
-        .theme-toggle:hover {
-            background-color: var(--chat-bg);
-        }
-
-        .theme-toggle svg {
-            width: 24px;
-            height: 24px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-
-        @media (min-width: 768px) {
-            .grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        .panel {
-            background-color: var(--panel-bg);
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px var(--shadow-color);
-            padding: 1rem;
-            transition: background-color 0.3s;
-        }
-
-        .panel-title {
-            font-size: 1.75rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            text-align: right;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-            font-weight: 500;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-            background-color: var(--panel-bg);
-            color: var(--text-color);
-            font-size: 1.1rem;
-            transition: all 0.3s;
-        }
-
-        .form-input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-            outline: none;
-        }
-
-        .preferences-group {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .preference-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.1rem;
-        }
-
-        .preference-checkbox input {
-            width: 1.2rem;
-            height: 1.2rem;
-        }
-
-        .button {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 0.75rem 2rem;
-            border-radius: 0.5rem;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            font-size: 1.25rem;
-            width: 100%;
-        }
-
-        .button:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .itinerary-container {
-            height: calc(100vh - 250px);
-            overflow-y: auto;
-            margin-bottom: 1rem;
-            padding: 1rem;
-            background-color: var(--chat-bg);
-            border-radius: 0.5rem;
-            transition: background-color 0.3s;
-        }
-
-        .day-section {
-            margin-bottom: 2rem;
-            padding: 1rem;
-            background-color: var(--panel-bg);
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 4px var(--shadow-color);
-        }
-
-        .day-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--primary-color);
-        }
-
-        .activity {
-            margin-bottom: 1rem;
-            padding: 1rem;
-            background-color: var(--chat-bg);
-            border-radius: 0.5rem;
-        }
-
-        .activity-title {
-            font-size: 1.2rem;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-
-        .activity-description {
-            font-size: 1.1rem;
-            line-height: 1.5;
-        }
-
-        .loading {
-            display: none;
-            margin: 10px 0;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.25rem;
-        }
-
-        .loading.active {
-            display: flex;
-        }
-
-        .spinner {
-            width: 2rem;
-            height: 2rem;
-            border: 2px solid var(--primary-color);
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-left: 0.5rem;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        [dir="ltr"] {
-            text-align: left;
-        }
-
-        [dir="rtl"] {
-            text-align: right;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Enhanced Background Animation Elements -->
+    <div class="grid-pattern"></div>
+    <div class="floating-orbs">
+            <!-- <img src="tr.gif" alt="Background Image" class="background-image" style="width: 100%; height: 100%; object-fit: cover;"> -->
+
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+    <div class="particles" id="particles"></div>
+
     <div class="container">
         <div class="header">
             <h1 class="title">AI Travel Planner</h1>
@@ -364,6 +106,61 @@
     </div>
 
     <script>
+        // Enhanced Particle System
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleTypes = ['particle-small', 'particle-medium', 'particle-large', 'particle-glow', 'particle-star'];
+            const particleCount = 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                const randomType = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+                particle.className = `particle ${randomType}`;
+                
+                // Random horizontal position
+                particle.style.left = Math.random() * 100 + '%';
+                
+                // Random animation delay and duration
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (Math.random() * 15 + 10) + 's';
+                
+                // Add some horizontal drift
+                const drift = (Math.random() - 0.5) * 100;
+                particle.style.setProperty('--drift', drift + 'px');
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Continuous particle generation
+        function generateNewParticle() {
+            const particlesContainer = document.getElementById('particles');
+            const particleTypes = ['particle-small', 'particle-medium', 'particle-large', 'particle-glow', 'particle-star'];
+            
+            const particle = document.createElement('div');
+            const randomType = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+            particle.className = `particle ${randomType}`;
+            
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDuration = (Math.random() * 15 + 10) + 's';
+            
+            particlesContainer.appendChild(particle);
+            
+            // Remove particle after animation completes
+            setTimeout(() => {
+                if (particle.parentNode) {
+                    particle.parentNode.removeChild(particle);
+                }
+            }, 35000);
+        }
+
+        // Initialize particles and start continuous generation
+        window.addEventListener('load', () => {
+            createParticles();
+            // Generate new particles every 2 seconds
+            setInterval(generateNewParticle, 2000);
+        });
+
         const sunIcon = document.querySelector('.sun-icon');
         const moonIcon = document.querySelector('.moon-icon');
         const loadingElement = document.querySelector('.loading');
@@ -472,7 +269,7 @@
             itineraryContainer.innerHTML = '';
 
             try {
-                const response = await fetch('/generate-itinerary', {
+                const response = await fetch('/api/generate-itinerary', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -486,22 +283,18 @@
                     })
                 });
 
-                const data = await response.json();
-                
                 if (!response.ok) {
-                    throw new Error(data.error?.message || 'Failed to generate itinerary');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || 'Failed to generate itinerary');
                 }
 
-                if (data.error) {
-                    throw new Error(data.error.message || 'Failed to generate itinerary');
-                }
-
+                const data = await response.json();
                 displayItinerary(data.itinerary);
             } catch (error) {
                 const currentLang = document.documentElement.lang;
                 const errorPrefix = currentLang === 'ar' ? '❌ حدث خطأ:' : '❌ Error:';
                 itineraryContainer.innerHTML = `
-                    <div class="error-message" style="color: #ef4444; padding: 1rem; background: #fee2e2; border-radius: 0.5rem; margin: 1rem 0;">
+                    <div class="error-message">
                         ${errorPrefix} ${error.message}
                     </div>
                 `;
