@@ -1,0 +1,500 @@
+/* Enhanced AI Travel Planner v2.0 - Modern Glassmorphism Design with Glow Effects */
+
+:root {
+    /* Color System */
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --warning-gradient: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+    --error-gradient: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+    
+    /* Light Theme */
+    --bg-gradient: linear-gradient(135deg, #f7f7f7 0%, #c3cfe2 100%);
+    --glass-bg: rgba(255, 255, 255, 0.25);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    
+    --text-primary: #2d3748;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --surface-primary: #ffffff;
+    --surface-secondary: #f7fafc;
+    --border-color: #e2e8f0;
+    
+    /* Spacing & Sizing */
+    --container-padding: 2rem;
+    --panel-gap: 2rem;
+    --border-radius: 20px;
+    --border-radius-sm: 12px;
+    --border-radius-lg: 24px;
+    
+    /* Transitions */
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-medium: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+    --bg-gradient: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+    --glass-bg: rgba(255, 255, 255, 0.08);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    
+    --text-primary: #ffffff;
+    --text-secondary: #e2e8f0;
+    --text-muted: #a0aec0;
+    --surface-primary: rgba(255, 255, 255, 0.08);
+    --surface-secondary: rgba(255, 255, 255, 0.05);
+    --border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--bg-gradient);
+    color: var(--text-primary);
+    font-family: 'Tajawal', 'Inter', system-ui, sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Enhanced Background Elements */
+.grid-pattern {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.1) 2px, transparent 0);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: -3;
+}
+
+.floating-orbs {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: -2;
+}
+
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.6;
+    animation: float 20s infinite linear;
+}
+
+.orb:nth-child(1) {
+    width: 300px;
+    height: 300px;
+    background: var(--primary-gradient);
+    top: 20%;
+    left: 10%;
+    animation-delay: 0s;
+    animation-duration: 25s;
+}
+
+.orb:nth-child(2) {
+    width: 200px;
+    height: 200px;
+    background: var(--secondary-gradient);
+    top: 60%;
+    right: 20%;
+    animation-delay: -8s;
+    animation-duration: 30s;
+}
+
+.orb:nth-child(3) {
+    width: 250px;
+    height: 250px;
+    background: var(--success-gradient);
+    bottom: 10%;
+    left: 30%;
+    animation-delay: -15s;
+    animation-duration: 35s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(30px, -30px) rotate(90deg); }
+    50% { transform: translate(-20px, 20px) rotate(180deg); }
+    75% { transform: translate(-30px, -10px) rotate(270deg); }
+}
+
+/* Animated Glow Rings */
+.glow-rings {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.glow-ring {
+    position: absolute;
+    border-radius: 50%;
+    background: transparent;
+    border: 3px solid;
+    animation: glowPulse 8s ease-in-out infinite;
+}
+
+.glow-ring:nth-child(1) {
+    width: 300px;
+    height: 300px;
+    top: 15%;
+    left: 10%;
+    border-color: rgba(102, 126, 234, 0.4);
+    box-shadow: 0 0 50px rgba(102, 126, 234, 0.3), 
+                inset 0 0 30px rgba(102, 126, 234, 0.2);
+    animation-delay: 0s;
+}
+
+.glow-ring:nth-child(2) {
+    width: 200px;
+    height: 200px;
+    top: 70%;
+    right: 15%;
+    border-color: rgba(240, 147, 251, 0.5);
+    box-shadow: 0 0 40px rgba(240, 147, 251, 0.4),
+                inset 0 0 25px rgba(240, 147, 251, 0.3);
+    animation-delay: -3s;
+}
+
+.glow-ring:nth-child(3) {
+    width: 180px;
+    height: 180px;
+    top: 40%;
+    right: 25%;
+    border-color: rgba(79, 172, 254, 0.4);
+    box-shadow: 0 0 45px rgba(79, 172, 254, 0.4),
+                inset 0 0 28px rgba(79, 172, 254, 0.2);
+    animation-delay: -6s;
+}
+
+.glow-ring:nth-child(4) {
+    width: 120px;
+    height: 120px;
+    top: 25%;
+    left: 70%;
+    border-color: rgba(245, 87, 108, 0.6);
+    box-shadow: 0 0 35px rgba(245, 87, 108, 0.5),
+                inset 0 0 20px rgba(245, 87, 108, 0.3);
+    animation-delay: -4s;
+}
+
+@keyframes glowPulse {
+    0%, 100% {
+        transform: scale(0.8) rotate(0deg);
+        opacity: 0.5;
+        filter: blur(2px);
+    }
+    50% {
+        transform: scale(1.3) rotate(180deg);
+        opacity: 1;
+        filter: blur(0px);
+    }
+}
+
+/* Floating Glow Orbs */
+.glow-orbs {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    pointer-events: none;
+}
+
+.glow-orb {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(102, 126, 234, 0.6) 0%, rgba(102, 126, 234, 0.2) 40%, transparent 70%);
+    filter: blur(1px);
+    animation: orbGlow 12s ease-in-out infinite;
+}
+
+.glow-orb:nth-child(1) {
+    width: 80px;
+    height: 80px;
+    top: 20%;
+    left: 15%;
+    background: radial-gradient(circle, rgba(102, 126, 234, 0.7) 0%, rgba(102, 126, 234, 0.3) 40%, transparent 70%);
+    box-shadow: 0 0 60px rgba(102, 126, 234, 0.5);
+    animation-delay: 0s;
+}
+
+.glow-orb:nth-child(2) {
+    width: 60px;
+    height: 60px;
+    top: 75%;
+    right: 20%;
+    background: radial-gradient(circle, rgba(240, 147, 251, 0.7) 0%, rgba(240, 147, 251, 0.3) 40%, transparent 70%);
+    box-shadow: 0 0 50px rgba(240, 147, 251, 0.5);
+    animation-delay: -4s;
+}
+
+.glow-orb:nth-child(3) {
+    width: 100px;
+    height: 100px;
+    bottom: 25%;
+    left: 60%;
+    background: radial-gradient(circle, rgba(79, 172, 254, 0.7) 0%, rgba(79, 172, 254, 0.3) 40%, transparent 70%);
+    box-shadow: 0 0 70px rgba(79, 172, 254, 0.5);
+    animation-delay: -8s;
+}
+
+.glow-orb:nth-child(4) {
+    width: 50px;
+    height: 50px;
+    top: 45%;
+    left: 85%;
+    background: radial-gradient(circle, rgba(245, 87, 108, 0.7) 0%, rgba(245, 87, 108, 0.3) 40%, transparent 70%);
+    box-shadow: 0 0 40px rgba(245, 87, 108, 0.5);
+    animation-delay: -6s;
+}
+
+@keyframes orbGlow {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.6;
+    }
+    25% {
+        transform: translate(20px, -15px) scale(1.2);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-15px, 20px) scale(0.8);
+        opacity: 0.4;
+    }
+    75% {
+        transform: translate(25px, 8px) scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+/* Animated Light Beams */
+.light-beams {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -3;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.light-beam {
+    position: absolute;
+    width: 2px;
+    background: linear-gradient(to bottom, transparent 0%, rgba(102, 126, 234, 0.8) 50%, transparent 100%);
+    animation: beamMove 10s linear infinite;
+    opacity: 0;
+}
+
+.light-beam:nth-child(1) {
+    height: 200px;
+    left: 25%;
+    animation-delay: 0s;
+    background: linear-gradient(to bottom, transparent 0%, rgba(102, 126, 234, 0.6) 50%, transparent 100%);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+}
+
+.light-beam:nth-child(2) {
+    height: 250px;
+    left: 50%;
+    animation-delay: -3s;
+    background: linear-gradient(to bottom, transparent 0%, rgba(240, 147, 251, 0.6) 50%, transparent 100%);
+    box-shadow: 0 0 18px rgba(240, 147, 251, 0.4);
+}
+
+.light-beam:nth-child(3) {
+    height: 180px;
+    left: 75%;
+    animation-delay: -6s;
+    background: linear-gradient(to bottom, transparent 0%, rgba(79, 172, 254, 0.6) 50%, transparent 100%);
+    box-shadow: 0 0 22px rgba(79, 172, 254, 0.4);
+}
+
+@keyframes beamMove {
+    0% {
+        transform: translateY(-100vh) rotateZ(5deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotateZ(5deg);
+        opacity: 0;
+    }
+}
+
+/* Enhanced Particle System */
+.particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.particle {
+    position: absolute;
+    background: var(--text-muted);
+    border-radius: 50%;
+    opacity: 0.1;
+    animation: rise linear infinite;
+}
+
+.particle-small {
+    width: 2px;
+    height: 2px;
+    background: rgba(102, 126, 234, 0.6);
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.4);
+}
+
+.particle-medium {
+    width: 4px;
+    height: 4px;
+    background: rgba(240, 147, 251, 0.5);
+    box-shadow: 0 0 12px rgba(240, 147, 251, 0.3);
+}
+
+.particle-large {
+    width: 6px;
+    height: 6px;
+    background: rgba(79, 172, 254, 0.4);
+    box-shadow: 0 0 15px rgba(79, 172, 254, 0.3);
+}
+
+.particle-glow {
+    width: 3px;
+    height: 3px;
+    background: rgba(245, 87, 108, 0.7);
+    box-shadow: 0 0 20px rgba(245, 87, 108, 0.6);
+}
+
+@keyframes rise {
+    0% {
+        opacity: 0;
+        transform: translateY(100vh) translateX(0);
+    }
+    10% {
+        opacity: 0.3;
+    }
+    90% {
+        opacity: 0.3;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-100px) translateX(var(--drift, 0));
+    }
+}
+
+/* Mobile Optimizations for Glow Effects */
+@media (max-width: 768px) {
+    .glow-ring:nth-child(n+3) {
+        display: none; /* Reduce glow rings on mobile */
+    }
+    
+    .glow-orb:nth-child(n+3) {
+        display: none; /* Reduce glow orbs on mobile */
+    }
+    
+    .light-beam {
+        display: none; /* Disable light beams on mobile for performance */
+    }
+    
+    .glow-ring, .glow-orb {
+        animation-duration: 15s; /* Slower animations on mobile */
+    }
+}
+
+/* Dark Mode Glow Adjustments */
+[data-theme="dark"] .glow-ring:nth-child(1) {
+    border-color: rgba(102, 126, 234, 0.7);
+    box-shadow: 0 0 60px rgba(102, 126, 234, 0.5), 
+                inset 0 0 40px rgba(102, 126, 234, 0.3);
+}
+
+[data-theme="dark"] .glow-ring:nth-child(2) {
+    border-color: rgba(240, 147, 251, 0.8);
+    box-shadow: 0 0 50px rgba(240, 147, 251, 0.6),
+                inset 0 0 35px rgba(240, 147, 251, 0.4);
+}
+
+[data-theme="dark"] .glow-ring:nth-child(3) {
+    border-color: rgba(79, 172, 254, 0.6);
+    box-shadow: 0 0 55px rgba(79, 172, 254, 0.5),
+                inset 0 0 38px rgba(79, 172, 254, 0.3);
+}
+
+[data-theme="dark"] .glow-ring:nth-child(4) {
+    border-color: rgba(245, 87, 108, 0.9);
+    box-shadow: 0 0 45px rgba(245, 87, 108, 0.7),
+                inset 0 0 30px rgba(245, 87, 108, 0.4);
+}
+
+[data-theme="dark"] .glow-orb {
+    box-shadow: 0 0 80px rgba(102, 126, 234, 0.7);
+}
+
+[data-theme="dark"] .particle-small {
+    background: rgba(102, 126, 234, 0.8);
+    box-shadow: 0 0 15px rgba(102, 126, 234, 0.6);
+}
+
+[data-theme="dark"] .particle-medium {
+    background: rgba(240, 147, 251, 0.7);
+    box-shadow: 0 0 18px rgba(240, 147, 251, 0.5);
+}
+
+[data-theme="dark"] .particle-large {
+    background: rgba(79, 172, 254, 0.6);
+    box-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
+}
+
+[data-theme="dark"] .particle-glow {
+    background: rgba(245, 87, 108, 0.9);
+    box-shadow: 0 0 25px rgba(245, 87, 108, 0.8);
+}
+
+/* Accessibility - Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .glow-ring,
+    .glow-orb,
+    .light-beam,
+    .particle {
+        animation: none !important;
+    }
+    
+    .glow-ring {
+        opacity: 0.3;
+    }
+    
+    .glow-orb {
+        opacity: 0.2;
+    }
+}
