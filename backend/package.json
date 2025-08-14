@@ -16,7 +16,11 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "helmet": "^7.1.0",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "bcryptjs": "^2.4.3",
+    "express-session": "^1.17.3",
+    "connect-sqlite3": "^0.9.15",
+    "sqlite3": "^5.1.7"
   },
   "description": ""
 }

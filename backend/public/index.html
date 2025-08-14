@@ -16,7 +16,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="manifest" href="manifest.json">
 </head>
-<body>    <!-- Enhanced Background Animation Elements -->
+<body>
+    <!-- Enhanced Background Animation Elements -->
     <div class="grid-pattern"></div>
     <div class="floating-orbs">
         <div class="orb"></div>
@@ -54,32 +55,9 @@
         <div class="glow-dot"></div>
     </div>
 
-    <!-- Trip Countdown Timer -->
-    <div id="countdown-banner" class="countdown-banner" style="display: none;">
-        <div class="countdown-content">
-            <h3 data-ar="العد التنازلي للرحلة" data-en="Trip Countdown">العد التنازلي للرحلة</h3>
-            <div class="countdown-timer">
-                <div class="time-unit">
-                    <span class="time-value" id="days">00</span>
-                    <span class="time-label" data-ar="أيام" data-en="Days">أيام</span>
-                </div>
-                <div class="time-unit">
-                    <span class="time-value" id="hours">00</span>
-                    <span class="time-label" data-ar="ساعات" data-en="Hours">ساعات</span>
-                </div>
-                <div class="time-unit">
-                    <span class="time-value" id="minutes">00</span>
-                    <span class="time-label" data-ar="دقائق" data-en="Minutes">دقائق</span>
-                </div>
-                <div class="time-unit">
-                    <span class="time-value" id="seconds">00</span>
-                    <span class="time-label" data-ar="ثواني" data-en="Seconds">ثواني</span>
-                </div>
-            </div>
-            <button class="close-countdown" onclick="hideCountdown()">×</button>
-        </div>
-    </div>
 
+
+    
     <div class="container">
         <div class="header">
             <h1 class="title">
@@ -87,6 +65,11 @@
                 <span class="version-badge">Enhanced</span>
             </h1>
             <div class="header-controls">
+                <div id="auth-controls" class="auth-controls">
+                    <span id="auth-user" class="auth-user" style="display:none"></span>
+                    <a id="login-btn" class="button secondary" href="/auth" data-ar="تسجيل الدخول" data-en="Log in">تسجيل الدخول</a>
+                    <button id="logout-btn" class="button secondary" onclick="logout()" style="display:none" data-ar="تسجيل الخروج" data-en="Log out">تسجيل الخروج</button>
+                </div>
                 <button class="lang-toggle" onclick="toggleLanguage()" title="Switch Language">
                     <span class="lang-text">English</span>
                 </button>
@@ -106,74 +89,17 @@
         
         <!-- Feature Navigation Tabs -->
         <div class="feature-tabs">
-            <button class="tab-button active" onclick="showTab('planning')" data-ar="التخطيط" data-en="Planning">التخطيط</button>
+            <button class="tab-button active" onclick="showTab('welcome')" data-ar="الرئيسية" data-en="Home">الرئيسية</button>
             <button class="tab-button" onclick="showTab('photos')" data-ar="الصور" data-en="Photos">الصور</button>
         </div>
 
         <div class="grid">
-            <!-- Planning Tab -->
-            <div id="planning-tab" class="tab-content active">
-                <!-- Enhanced Input Form Section with Chat UI -->
+            <!-- Welcome Tab -->
+            <div id="welcome-tab" class="tab-content active">
                 <div class="panel">
-                    <h2 class="panel-title" data-ar="تفاصيل الرحلة" data-en="Trip Details">تفاصيل الرحلة</h2>
-                    <form id="travelForm" onsubmit="generateItinerary(event)">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label" data-ar="تاريخ البداية" data-en="Start Date">تاريخ البداية</label>
-                                <input type="date" class="form-input" id="startDate" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" data-ar="تاريخ النهاية" data-en="End Date">تاريخ النهاية</label>
-                                <input type="date" class="form-input" id="endDate" required>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group flex-2">
-                                <label class="form-label" data-ar="الوجهة" data-en="Destination">الوجهة</label>
-                                <input type="text" class="form-input" id="destination" data-ar-placeholder="مثال: باريس، فرنسا" data-en-placeholder="Example: Paris, France" placeholder="مثال: باريس، فرنسا" required>
-                            </div>
-                        </div>
-                        
-
-                        <div class="form-group">
-                            <label class="form-label" data-ar="الاهتمامات (دردشة)" data-en="Interests (Chat)">الاهتمامات (دردشة)</label>
-                            <div id="chat-container" class="card">
-                                <div id="chat-history" class="chat-history"></div>
-                                <form id="chat-form" class="chat-form" onsubmit="handlePlannerChat(event)">
-                                    <input type="text" id="chat-input" class="form-input" data-ar-placeholder="صف اهتماماتك مثل: المتاحف، الطعام المحلي، الطبيعة" data-en-placeholder="Describe interests like: museums, local food, nature" placeholder="صف اهتماماتك مثل: المتاحف، الطعام المحلي، الطبيعة" autocomplete="off" required>
-                                    <button type="submit" class="button primary" data-ar="إرسال" data-en="Send">إرسال</button>
-                                </form>
-                            </div>
-                        </div>
-
-                        <div class="button-group">
-                            <button type="submit" class="button primary" data-ar="توليد الخطة" data-en="Generate Plan">توليد الخطة</button>
-                            <button type="button" class="button secondary" onclick="loadSampleTrip()" data-ar="مثال سريع" data-en="Quick Sample">مثال سريع</button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Enhanced Itinerary Display Section -->
-                <div class="panel">
-                    <div class="panel-header">
-                        <h2 class="panel-title" data-ar="خطة الرحلة" data-en="Travel Plan">خطة الرحلة</h2>
-                        <div id="interests-badge" class="interests-badge" style="display:none"></div>
-                        <div class="panel-actions" id="itinerary-actions" style="display: none;">
-                            <button class="action-btn" onclick="shareItinerary()" title="Share">📤</button>
-                            <button class="action-btn" onclick="saveItinerary()" title="Save">💾</button>
-                            <button class="action-btn" onclick="startCountdown()" title="Start Countdown">⏰</button>
-                        </div>
-                    </div>
-                    <div class="loading">
-                        <span data-ar="جاري إنشاء الخطة..." data-en="Generating plan...">جاري إنشاء الخطة...</span>
-                        <div class="spinner"></div>
-                    </div>
-                    <div id="itinerary" class="itinerary-container">
                         <div class="welcome-message">
                             <h3 data-ar="مرحباً بك في مخطط السفر بالذكاء الاصطناعي!" data-en="Welcome to AI Travel Planner!">مرحباً بك في مخطط السفر بالذكاء الاصطناعي!</h3>
-                            <p data-ar="املأ النموذج أعلاه لإنشاء خطة سفر مخصصة وذكية" data-en="Fill out the form above to create a personalized, intelligent travel plan">املأ النموذج أعلاه لإنشاء خطة سفر مخصصة وذكية</p>
-                        </div>
+                        <p data-ar="اكتشف وجهات رائعة واستكشف الصور الجميلة" data-en="Discover amazing destinations and explore beautiful photos">اكتشف وجهات رائعة واستكشف الصور الجميلة</p>
                     </div>
                 </div>
             </div>
@@ -213,34 +139,7 @@
             </div>
         </div>
 
-        <!-- Share Modal -->
-        <div id="share-modal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 data-ar="مشاركة الخطة" data-en="Share Itinerary">مشاركة الخطة</h3>
-                    <button class="close-modal" onclick="closeShareModal()">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="share-options">
-                        <button onclick="shareViaWhatsApp()" class="share-btn whatsapp">
-                            <span class="share-icon">📱</span>
-                            <span data-ar="واتساب" data-en="WhatsApp">واتساب</span>
-                        </button>
-                        <button onclick="shareViaEmail()" class="share-btn email">
-                            <span class="share-icon">📧</span>
-                            <span data-ar="إيميل" data-en="Email">إيميل</span>
-                        </button>
-                        <button onclick="copyShareLink()" class="share-btn copy">
-                            <span class="share-icon">🔗</span>
-                            <span data-ar="نسخ الرابط" data-en="Copy Link">نسخ الرابط</span>
-                        </button>
-                    </div>
-                    <div class="share-link">
-                        <input type="text" id="shareLink" class="form-input" readonly>
-                    </div>
-                </div>
-            </div>
-        </div>
+       
 
         <!-- Photo Modal -->
         <div id="photo-modal" class="modal photo-modal" style="display: none;">
@@ -252,13 +151,44 @@
                     <p id="modal-photo-description"></p>
                 </div>
             </div>
-        </div>        <!-- Enhanced Footer -->
+        </div>
+
+         <!-- Auth Modal
+         <div id="auth-modal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 data-ar="الحساب" data-en="Account">الحساب</h3>
+                    <button class="close-modal" onclick="closeAuthModal()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="auth-tabs">
+                        <button id="tab-register" type="button" class="auth-tab active" onclick="setAuthMode('register')" data-ar="إنشاء حساب" data-en="Create account">إنشاء حساب</button>
+                        <button id="tab-login" type="button" class="auth-tab" onclick="setAuthMode('login')" data-ar="تسجيل الدخول" data-en="Log in">تسجيل الدخول</button>
+                    </div>
+                    <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+                        <div class="form-group">
+                            <label class="form-label" data-ar="البريد الإلكتروني" data-en="Email">البريد الإلكتروني</label>
+                            <input type="email" id="auth-email" class="form-input" required>
+                    </div>
+                        <div class="form-group">
+                            <label class="form-label" data-ar="كلمة المرور" data-en="Password">كلمة المرور</label>
+                            <input type="password" id="auth-password" class="form-input" required>
+                </div>
+                        <div class="button-group">
+                            <button type="submit" class="button primary" data-ar="إنشاء حساب" data-en="Create account">إنشاء حساب</button>
+                        </div>
+                    </form>
+                    <div id="auth-error" class="text-muted" style="color:#e53e3e;margin-top:8px;"></div>
+                </div>
+            </div>
+        </div> -->
+        
+        <!-- Enhanced Footer -->
         <footer class="footer">
             <div class="footer-content">
                 <div class="footer-section">
                     <h4 data-ar="الميزات الجديدة" data-en="New Features">الميزات الجديدة</h4>
                     <ul>
-                        
                         <li data-ar="مساعد السفر الذكي" data-en="AI Travel Assistant">مساعد السفر الذكي</li>
                     </ul>
                 </div>
@@ -277,7 +207,10 @@
                     </div>
                 </div>
             </div>
-        </footer>    </div>    <script>
+        </footer>
+    </div>
+
+    <script>
         // Mobile and Touch Device Detection & Optimization
         const isMobile = window.innerWidth <= 768;
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -359,10 +292,8 @@
         });
 
         // Global variables
-        let currentItinerary = null;
-        let currentDestination = '';
-        let tripStartDate = null;
-        let countdownInterval = null;
+        let authMode = 'register';
+        let currentUser = null;
 
         // Enhanced Particle System
         function createParticles() {
@@ -463,7 +394,7 @@
         }
 
         // Tab Management
-        function showTab(tabName) {
+    function showTab(tabName) {
             // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
@@ -481,211 +412,64 @@
             event.target.classList.add('active');
         }
 
-        // Itinerary Functions
-        function displayItinerary(itinerary) {
-            const container = document.getElementById('itinerary');
-            container.innerHTML = '';
-            const currentLang = document.documentElement.lang;
-            const dayText = currentLang === 'ar' ? 'اليوم' : 'Day';
-            
-            itinerary.forEach(day => {
-                const daySection = document.createElement('div');
-                daySection.className = 'day-section';
-                
-                const dayTitle = document.createElement('h3');
-                dayTitle.className = 'day-title';
-                dayTitle.textContent = `${dayText} ${day.day}`;
-                daySection.appendChild(dayTitle);
-
-                day.activities.forEach(activity => {
-                    const activityDiv = document.createElement('div');
-                    activityDiv.className = 'activity';
-                    
-                    const activityHeader = document.createElement('div');
-                    activityHeader.className = 'activity-header';
-                    
-                    const activityTitle = document.createElement('h4');
-                    activityTitle.className = 'activity-title';
-                    activityTitle.textContent = activity.title;
-                    
-                    if (activity.time) {
-                        const activityTime = document.createElement('span');
-                        activityTime.className = 'activity-time';
-                        activityTime.textContent = activity.time;
-                        activityHeader.appendChild(activityTime);
-                    }
-                    
-                    activityHeader.appendChild(activityTitle);
-                    
-                    const activityDesc = document.createElement('p');
-                    activityDesc.className = 'activity-description';
-                    activityDesc.textContent = activity.description;
-                    
-                    activityDiv.appendChild(activityHeader);
-                    activityDiv.appendChild(activityDesc);
-                    daySection.appendChild(activityDiv);
-                });
-
-                container.appendChild(daySection);
-            });
-
-            // Show action buttons
-            document.getElementById('itinerary-actions').style.display = 'flex';
-        }
-
-        // Planner Chat -> AI -> Update Travel Plan (global once)
-        let plannerChatId = null;
-        function appendPlannerChat(sender, text) {
-            const box = document.getElementById('chat-history');
-            if (!box) return;
-            const row = document.createElement('div');
-            row.className = `chat-row ${sender}`;
-            row.textContent = text;
-            box.appendChild(row);
-            box.scrollTop = box.scrollHeight;
-        }
-
-        async function handlePlannerChat(event) {
-            event.preventDefault();
-            const input = document.getElementById('chat-input');
-            const text = input.value.trim();
-            if (!text) return;
-            const isFirstMessage = !plannerChatId;
-            // Always treat this chat input as the authoritative interests list
-            const parsedInterests = text.includes(',') ? text.split(',').map(s => s.trim()).filter(Boolean) : [text];
-            window.currentInterests = parsedInterests;
-            const badgeEl = document.getElementById('interests-badge');
-            if (badgeEl) {
-                const list = parsedInterests.join(', ');
-                badgeEl.textContent = (document.documentElement.lang === 'ar' ? 'الاهتمامات: ' : 'Interests: ') + list;
-                badgeEl.style.display = list ? 'block' : 'none';
+        // Auth Functions
+        function setAuthMode(mode) {
+            authMode = mode === 'login' ? 'login' : 'register';
+            const submitBtn = document.querySelector('#auth-form .button.primary');
+            if (authMode === 'login') {
+                submitBtn.setAttribute('data-ar', 'تسجيل الدخول'); submitBtn.setAttribute('data-en', 'Log in');
+            } else {
+                submitBtn.setAttribute('data-ar', 'إنشاء حساب'); submitBtn.setAttribute('data-en', 'Create account');
             }
-            appendPlannerChat('user', text);
-            input.value = '';
-            appendPlannerChat('assistant', '…');
-
-            try {
-                const res = await fetch('/api/itinerary-chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chatId: plannerChatId, message: text, language: document.documentElement.lang })
-                });
-                const data = await res.json();
-                const box = document.getElementById('chat-history');
-                if (box && box.lastChild) box.lastChild.textContent = data.reply || 'OK';
-                if (data.chatId) plannerChatId = data.chatId;
-                if (data.meta) {
-                    if (data.meta.destination) {
-                        const destEl = document.getElementById('destination');
-                        if (destEl) destEl.value = data.meta.destination;
-                        currentDestination = data.meta.destination;
-                    }
-                    if (data.meta.startDate) {
-                        const sd = document.getElementById('startDate');
-                        if (sd) sd.value = data.meta.startDate;
-                        tripStartDate = new Date(data.meta.startDate);
-                    }
-                    if (data.meta.endDate) {
-                        const ed = document.getElementById('endDate');
-                        if (ed) ed.value = data.meta.endDate;
-                    }
+            const tabReg = document.getElementById('tab-register');
+            const tabLog = document.getElementById('tab-login');
+            if (tabReg && tabLog) {
+                if (authMode === 'register') {
+                    tabReg.classList.add('active');
+                    tabLog.classList.remove('active');
+                        } else {
+                    tabLog.classList.add('active');
+                    tabReg.classList.remove('active');
                 }
-                if (Array.isArray(data.itinerary)) {
-                    currentItinerary = data.itinerary;
-                    displayItinerary(data.itinerary);
+            }
+            updateAuthTexts();
+        }
+        
+        // Modal auth is no longer used on home; we redirect to /auth instead
+        function openAuthModal() { location.href = '/auth?redirect=' + encodeURIComponent(location.pathname); }
+        function openRegisterModal() { location.href = '/auth?redirect=' + encodeURIComponent(location.pathname); }
+        function openLoginModal() { location.href = '/auth?redirect=' + encodeURIComponent(location.pathname); }
+        function closeAuthModal() {}
+        function switchAuthMode() {}
+        
+        async function handleAuthSubmit(e) { e && e.preventDefault(); }
+        
+        async function logout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            location.replace('/auth');
+        }
+        
+        async function checkAuth() {
+            const res = await fetch('/api/auth/me');
+            const data = await res.json();
+            currentUser = data.user;
+            if (currentUser) {
+                document.getElementById('auth-user').textContent = currentUser.email;
+                document.getElementById('auth-user').style.display = 'inline-block';
+                document.getElementById('login-btn').style.display = 'none';
+                document.getElementById('logout-btn').style.display = 'inline-block';
+            } else {
+                // Always redirect to auth if not logged in
+                if (!location.pathname.startsWith('/auth')) {
+                    location.replace('/auth?redirect=' + encodeURIComponent(location.pathname));
                 }
-            } catch (err) {
-                const box = document.getElementById('chat-history');
-                if (box && box.lastChild) box.lastChild.textContent = '❌ Error contacting planner';
             }
         }
-
-        async function generateItinerary(event) {
-            event.preventDefault();
-            
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            const destination = document.getElementById('destination').value;
-            const preferences = Array.isArray(window.currentInterests)
-                ? window.currentInterests
-                : [];
-
-            if (!startDate || !endDate || !destination) {
-                const currentLang = document.documentElement.lang;
-                const errorMsg = currentLang === 'ar' ? 
-                    'الرجاء ملء جميع الحقول المطلوبة' : 
-                    'Please fill in all required fields';
-                alert(errorMsg);
-                return;
-            }
-
-            const loadingElement = document.querySelector('.loading');
-            const itineraryContainer = document.getElementById('itinerary');
-            
-            loadingElement.classList.add('active');
-            itineraryContainer.innerHTML = '';
-
-            try {
-                const response = await fetch('/api/generate-itinerary', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        startDate,
-                        endDate,
-                        destination,
-                        preferences,
-                        language: document.documentElement.lang
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || 'Failed to generate itinerary');
-                }
-
-                const data = await response.json();
-                currentItinerary = data.itinerary;
-                currentDestination = destination;
-                tripStartDate = new Date(startDate);
-                
-                displayItinerary(data.itinerary);
-                
-                // Auto-populate other tabs
-                
-                document.getElementById('photosDestination').value = destination;
-                
-            } catch (error) {
-                const currentLang = document.documentElement.lang;
-                const errorPrefix = currentLang === 'ar' ? '❌ حدث خطأ:' : '❌ Error:';
-                itineraryContainer.innerHTML = `
-                    <div class="error-message">
-                        ${errorPrefix} ${error.message}
-                    </div>
-                `;
-            } finally {
-                loadingElement.classList.remove('active');
-            }
+        
+        function updateAuthTexts() {
+            // Re-apply language text for auth controls
+            setLanguage(document.documentElement.lang);
         }
-
-        function loadSampleTrip() {
-            const today = new Date();
-            const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-            
-            document.getElementById('startDate').value = today.toISOString().split('T')[0];
-            document.getElementById('endDate').value = nextWeek.toISOString().split('T')[0];
-            document.getElementById('destination').value = 'Paris, France';
-            // travelers field removed
-            
-            // Check some preferences
-            document.querySelector('input[value="culture"]').checked = true;
-            document.querySelector('input[value="food"]').checked = true;
-            document.querySelector('input[value="history"]').checked = true;
-        }
-
-        // Weather Functions
-    // Removed Weather, Budget, Packing, and Tips features and related functions
 
         // Photos Functions
         async function getPhotos() {
@@ -729,8 +513,6 @@
             document.getElementById('photo-modal').style.display = 'none';
         }
 
-        
-
         // AI Assistant Functions
         function toggleAIAssistant() {
             const assistant = document.getElementById('ai-assistant');
@@ -741,7 +523,9 @@
             if (event.key === 'Enter') {
                 sendToAssistant();
             }
-        }        // Helper function to format markdown-like text
+        }
+
+        // Helper function to format markdown-like text
         function formatMarkdown(text) {
             if (!text) return '';
             
@@ -804,11 +588,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message,
-                        language: document.documentElement.lang,
-                        context: {
-                            destination: currentDestination,
-                            itinerary: currentItinerary
-                        }
+                        language: document.documentElement.lang
                     })
                 });
                 
@@ -845,108 +625,13 @@
             chat.scrollTop = chat.scrollHeight;
         }
 
-        // Sharing Functions
-        async function saveItinerary() {
-            if (!currentItinerary) return;
-            
-            try {
-                const response = await fetch('/api/save-itinerary', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        itinerary: currentItinerary,
-                        destination: currentDestination,
-                        startDate: document.getElementById('startDate').value,
-                        endDate: document.getElementById('endDate').value,
-                        preferences: Array.isArray(window.currentInterests) ? window.currentInterests : Array.from(document.querySelectorAll('input[name="preferences"]:checked')).map(cb => cb.value),
-                        language: document.documentElement.lang
-                    })
-                });
-                
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error.message);
-                
-                alert(data.message);
-                document.getElementById('shareLink').value = data.shareUrl;
-            } catch (error) {
-                alert('Error saving itinerary: ' + error.message);
-            }
-        }
-
-        function shareItinerary() {
-            document.getElementById('share-modal').style.display = 'flex';
-        }
-
-        function closeShareModal() {
-            document.getElementById('share-modal').style.display = 'none';
-        }
-
-        function shareViaWhatsApp() {
-            const shareUrl = document.getElementById('shareLink').value;
-            if (shareUrl) {
-                window.open(`https://wa.me/?text=Check out my travel plan: ${shareUrl}`, '_blank');
-            }
-        }
-
-        function shareViaEmail() {
-            const shareUrl = document.getElementById('shareLink').value;
-            if (shareUrl) {
-                window.open(`mailto:?subject=My Travel Itinerary&body=Check out my travel plan: ${shareUrl}`, '_blank');
-            }
-        }
-
-        function copyShareLink() {
-            const shareLink = document.getElementById('shareLink');
-            shareLink.select();
-            document.execCommand('copy');
-            alert('Link copied to clipboard!');
-        }
-
-        // Countdown Functions
-        function startCountdown() {
-            if (!tripStartDate) return;
-            
-            document.getElementById('countdown-banner').style.display = 'flex';
-            updateCountdown();
-            countdownInterval = setInterval(updateCountdown, 1000);
-        }
-
-        function updateCountdown() {
-            if (!tripStartDate) return;
-            
-            const now = new Date().getTime();
-            const distance = tripStartDate.getTime() - now;
-            
-            if (distance < 0) {
-                hideCountdown();
-                return;
-            }
-            
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-            
-            document.getElementById('days').textContent = days.toString().padStart(2, '0');
-            document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
-            document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
-            document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
-        }
-
-        function hideCountdown() {
-            document.getElementById('countdown-banner').style.display = 'none';
-            if (countdownInterval) {
-                clearInterval(countdownInterval);
-                countdownInterval = null;
-            }
-        }
-
         // Initialize
         const savedLang = localStorage.getItem('language') || 'ar';
         setLanguage(savedLang);
 
         const savedTheme = localStorage.getItem('theme') || 'light';
         setTheme(savedTheme);
+        checkAuth();
     </script>
 </body>
 </html>

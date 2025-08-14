@@ -323,6 +323,21 @@ html[lang="en"], html[lang="en"] body {
     align-items: center;
 }
 
+.auth-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-inline-end: 0.5rem;
+}
+
+.auth-user {
+    color: var(--text-secondary);
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 0.75rem;
+    border-radius: 16px;
+}
+
 .lang-toggle,
 .theme-toggle,
 .ai-assistant-toggle {
@@ -464,6 +479,37 @@ html[lang="en"], html[lang="en"] body {
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 2rem;
+}
+
+/* User itineraries list */
+.itinerary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 0.5rem;
+}
+.it-title { font-weight: 600; color: var(--text-primary); }
+.it-meta { font-size: 0.9rem; color: var(--text-muted); }
+.it-actions { display: flex; gap: 0.5rem; }
+
+/* Login required message */
+.login-required {
+    text-align: center;
+    padding: 2rem;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    margin-top: 1rem;
+}
+
+.login-required p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
 }
 
 .panel-actions {
@@ -937,6 +983,37 @@ html[lang="en"], html[lang="en"] body {
     gap: 1rem;
 }
 
+/* Itineraries Manager */
+.itins-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.itin-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    padding: 0.75rem 1rem;
+}
+
+.itin-title {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.itin-sub {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.itin-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
 .photo-item {
     position: relative;
     aspect-ratio: 4/3;
@@ -1144,6 +1221,61 @@ html[lang="en"], html[lang="en"] body {
     margin: 0.5rem 0 0 auto;
     width: fit-content;
     text-align: center;
+}
+
+/* Auth Modal Enhancements */
+.modal .modal-content {
+    max-width: 480px;
+    width: 90%;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+}
+
+.auth-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--surface-secondary);
+    padding: 0.5rem;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.auth-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    font-weight: 600;
+}
+
+.auth-tab.active {
+    background: var(--primary-gradient);
+    color: #fff;
+}
+
+.modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal .modal-body {
+    padding-top: 0.5rem;
+}
+
+.modal .form-input {
+    background: var(--surface-primary);
+}
+
+.modal .button-group {
+    justify-content: center;
 }
 
 /* Enhanced Message Content */

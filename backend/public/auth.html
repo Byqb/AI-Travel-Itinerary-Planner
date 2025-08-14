@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Account • AI Travel Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles-enhanced.css">
+    <link rel="stylesheet" href="styles-enhanced-glow.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="grid-pattern"></div>
+    <div class="floating-orbs">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+    <div class="particles" id="particles"></div>
+    <div class="glow-rings">
+        <div class="glow-ring"></div>
+        <div class="glow-ring"></div>
+        <div class="glow-ring"></div>
+        <div class="glow-ring"></div>
+    </div>
+    <div class="glow-orbs">
+        <div class="glow-orb"></div>
+        <div class="glow-orb"></div>
+        <div class="glow-orb"></div>
+        <div class="glow-orb"></div>
+    </div>
+    <div class="light-beams">
+        <div class="light-beam"></div>
+        <div class="light-beam"></div>
+        <div class="light-beam"></div>
+    </div>
+    <div class="glow-dots">
+        <div class="glow-dot"></div>
+        <div class="glow-dot"></div>
+        <div class="glow-dot"></div>
+        <div class="glow-dot"></div>
+        <div class="glow-dot"></div>
+    </div>
+
+    <div class="container" style="max-width:560px;margin-top:6vh;">
+        <div class="header" style="justify-content: space-between;">
+            <h1 class="title" style="font-size: 1.25rem;">
+                AI Travel Planner
+                <span class="version-badge">Auth</span>
+            </h1>
+            <div class="header-controls">
+                <button class="lang-toggle" onclick="toggleLanguage()" title="Switch Language">
+                    <span class="lang-text">English</span>
+                </button>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="display: none;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="panel" style="backdrop-filter: blur(20px);">
+            <div class="panel-header">
+                <h2 class="panel-title" data-ar="الحساب" data-en="Account">الحساب</h2>
+            </div>
+            <div class="modal-body" style="padding: 16px;">
+                <p class="text-muted" style="margin:0 0 12px 0;" data-ar="سجّل دخولك لإنشاء وحفظ رحلاتك لاحقاً" data-en="Sign in to keep your trips saved for later">سجّل دخولك لإنشاء وحفظ رحلاتك لاحقاً</p>
+                <div class="auth-tabs" style="margin-top: 8px;">
+                    <button id="tab-register" type="button" class="auth-tab active" onclick="setAuthMode('register')" data-ar="إنشاء حساب" data-en="Create account">إنشاء حساب</button>
+                    <button id="tab-login" type="button" class="auth-tab" onclick="setAuthMode('login')" data-ar="تسجيل الدخول" data-en="Log in">تسجيل الدخول</button>
+                </div>
+                <form id="auth-form" onsubmit="handleAuthSubmit(event)" style="margin-top: 12px;">
+                    <div class="form-group">
+                        <label class="form-label" data-ar="البريد الإلكتروني" data-en="Email">البريد الإلكتروني</label>
+                        <input type="email" id="auth-email" class="form-input" required data-ar-placeholder="ادخل بريدك الإلكتروني" data-en-placeholder="Enter your email" placeholder="ادخل بريدك الإلكتروني">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" data-ar="كلمة المرور" data-en="Password">كلمة المرور</label>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input type="password" id="auth-password" class="form-input" required data-ar-placeholder="كلمة مرور لا تقل عن 8 أحرف" data-en-placeholder="At least 8 characters" placeholder="كلمة مرور لا تقل عن 8 أحرف">
+                            <button type="button" class="button secondary" style="white-space:nowrap;" onclick="togglePassword()" data-ar="إظهار" data-en="Show">إظهار</button>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" class="button primary" data-ar="إنشاء حساب" data-en="Create account">إنشاء حساب</button>
+                    </div>
+                    <div id="auth-error" class="text-muted" style="color:#e53e3e;margin-top:8px;"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authMode = 'register';
+        // Particles (simple)
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            if (!particlesContainer) return;
+            const types = ['particle-small','particle-medium','particle-large','particle-glow','particle-star'];
+            for (let i = 0; i < 30; i++) {
+                const el = document.createElement('div');
+                el.className = 'particle ' + types[Math.floor(Math.random()*types.length)];
+                el.style.left = Math.random()*100 + '%';
+                el.style.animationDelay = Math.random()*10 + 's';
+                el.style.animationDuration = (Math.random()*12 + 10) + 's';
+                particlesContainer.appendChild(el);
+            }
+        }
+        function setLanguage(lang) {
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            localStorage.setItem('language', lang);
+            document.querySelectorAll('[data-ar]').forEach(el => {
+                el.textContent = el.getAttribute(`data-${lang}`);
+            });
+            document.querySelectorAll('[data-ar-placeholder]').forEach(el => {
+                const ph = el.getAttribute(`data-${lang}-placeholder`);
+                if (ph) el.placeholder = ph;
+            });
+            const langText = document.querySelector('.lang-text');
+            if (langText) langText.textContent = lang === 'ar' ? 'English' : 'العربية';
+        }
+        function toggleLanguage() {
+            const current = document.documentElement.lang || 'ar';
+            setLanguage(current === 'ar' ? 'en' : 'ar');
+        }
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            const sun = document.querySelector('.sun-icon');
+            const moon = document.querySelector('.moon-icon');
+            if (theme === 'dark') { if (sun) sun.style.display = 'none'; if (moon) moon.style.display = 'block'; }
+            else { if (sun) sun.style.display = 'block'; if (moon) moon.style.display = 'none'; }
+        }
+        function toggleTheme() {
+            const cur = document.documentElement.getAttribute('data-theme') || 'light';
+            setTheme(cur === 'dark' ? 'light' : 'dark');
+        }
+        function setAuthMode(mode) {
+            authMode = mode === 'login' ? 'login' : 'register';
+            const submitBtn = document.querySelector('#auth-form .button.primary');
+            if (authMode === 'login') {
+                submitBtn.setAttribute('data-ar', 'تسجيل الدخول'); submitBtn.setAttribute('data-en', 'Log in');
+                submitBtn.textContent = document.documentElement.lang === 'ar' ? 'تسجيل الدخول' : 'Log in';
+            } else {
+                submitBtn.setAttribute('data-ar', 'إنشاء حساب'); submitBtn.setAttribute('data-en', 'Create account');
+                submitBtn.textContent = document.documentElement.lang === 'ar' ? 'إنشاء حساب' : 'Create account';
+            }
+            const tabReg = document.getElementById('tab-register');
+            const tabLog = document.getElementById('tab-login');
+            if (authMode === 'register') { tabReg.classList.add('active'); tabLog.classList.remove('active'); }
+            else { tabLog.classList.add('active'); tabReg.classList.remove('active'); }
+        }
+        function togglePassword() {
+            const input = document.getElementById('auth-password');
+            const btn = event.currentTarget;
+            const isPwd = input.type === 'password';
+            input.type = isPwd ? 'text' : 'password';
+            btn.setAttribute('data-ar', isPwd ? 'إخفاء' : 'إظهار');
+            btn.setAttribute('data-en', isPwd ? 'Hide' : 'Show');
+            btn.textContent = document.documentElement.lang === 'ar' ? (isPwd ? 'إخفاء' : 'إظهار') : (isPwd ? 'Hide' : 'Show');
+        }
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+            const path = authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+            try {
+                const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error?.message || 'Auth failed');
+                const redirect = new URLSearchParams(location.search).get('redirect') || '/';
+                location.replace(redirect);
+            } catch (err) {
+                document.getElementById('auth-error').textContent = err.message;
+            }
+        }
+        // If already logged in, go home
+        (async function init() {
+            createParticles();
+            const savedLang = localStorage.getItem('language') || 'ar';
+            setLanguage(savedLang);
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+            try {
+                const res = await fetch('/api/auth/me');
+                const data = await res.json();
+                if (data.user) {
+                    location.replace('/');
+                } else {
+                    // default to register first time
+                    setAuthMode('register');
+                }
+            } catch {}
+        })();
+    </script>
+</body>
+</html>
+
