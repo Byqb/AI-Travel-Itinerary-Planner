@@ -18,7 +18,7 @@ const isProd = process.env.NODE_ENV === 'production';
 // API config
 const API_URL = process.env.API_URL || "https://openrouter.ai/api/v1/chat/completions";
 const API_KEY = process.env.API_KEY;
-const MODEL = process.env.MODEL || "google/gemini-2.0-flash-exp:free";
+const MODEL = process.env.MODEL || "google/gemma-3n-e4b-it:free";
 //google/gemini-2.0-flash-exp:free
 
 // External services
