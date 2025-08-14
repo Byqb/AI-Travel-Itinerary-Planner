@@ -57,7 +57,7 @@
 
 
 
-    
+
     <div class="container">
         <div class="header">
             <h1 class="title">
@@ -90,6 +90,8 @@
         <!-- Feature Navigation Tabs -->
         <div class="feature-tabs">
             <button class="tab-button active" onclick="showTab('welcome')" data-ar="الرئيسية" data-en="Home">الرئيسية</button>
+            <button class="tab-button" onclick="showTab('planning')" data-ar="التخطيط" data-en="Planning">التخطيط</button>
+            <button class="tab-button" onclick="showTab('plans')" data-ar="خططي" data-en="My Plans">خططي</button>
             <button class="tab-button" onclick="showTab('photos')" data-ar="الصور" data-en="Photos">الصور</button>
         </div>
 
@@ -101,6 +103,72 @@
                             <h3 data-ar="مرحباً بك في مخطط السفر بالذكاء الاصطناعي!" data-en="Welcome to AI Travel Planner!">مرحباً بك في مخطط السفر بالذكاء الاصطناعي!</h3>
                         <p data-ar="اكتشف وجهات رائعة واستكشف الصور الجميلة" data-en="Discover amazing destinations and explore beautiful photos">اكتشف وجهات رائعة واستكشف الصور الجميلة</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Planning Tab -->
+            <div id="planning-tab" class="tab-content">
+                <div class="panel">
+                    <h2 class="panel-title" data-ar="تفاصيل الرحلة" data-en="Trip Details">تفاصيل الرحلة</h2>
+                    <form id="plan-form" onsubmit="createOrLoadPlan(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" data-ar="تاريخ البداية" data-en="Start Date">تاريخ البداية</label>
+                                <input type="date" id="plan-start" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-ar="تاريخ النهاية" data-en="End Date">تاريخ النهاية</label>
+                                <input type="date" id="plan-end" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group flex-2">
+                                <label class="form-label" data-ar="الوجهة" data-en="Destination">الوجهة</label>
+                                <input type="text" id="plan-destination" class="form-input" data-ar-placeholder="مثال: باريس، فرنسا" data-en-placeholder="Example: Paris, France" placeholder="مثال: باريس، فرنسا" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" data-ar="الاهتمامات / الوصف" data-en="Interests / Description">الاهتمامات / الوصف</label>
+                            <textarea id="plan-interests" class="form-input" rows="3" data-ar-placeholder="اكتب اهتماماتك وتعليماتك (مثال: متاحف، جولات طعام)" data-en-placeholder="Write your interests/instructions (e.g., museums, food tours)" placeholder="اكتب اهتماماتك وتعليماتك (مثال: متاحف، جولات طعام)"></textarea>
+                        </div>
+                        <div class="button-group">
+                            <button type="submit" class="button primary" data-ar="ابدأ الخطة" data-en="Start Plan">ابدأ الخطة</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title" data-ar="المحادثة" data-en="Conversation">المحادثة</h2>
+                        <div class="panel-actions">
+                            <button class="action-btn" title="History" onclick="showVersions()">🕘</button>
+                        </div>
+                    </div>
+                    <div id="planner-chat" class="assistant-chat" style="max-height: 420px;"></div>
+                    <div class="assistant-input">
+                        <input type="text" id="planner-input" class="form-input" data-ar-placeholder="اكتب أمراً مثل: أضف جولة نبيذ في اليوم الثالث" data-en-placeholder="Type a command, e.g., Add a wine tour on day 3" placeholder="اكتب أمراً مثل: أضف جولة نبيذ في اليوم الثالث" onkeypress="plannerKeypress(event)">
+                        <button class="button primary" onclick="sendPlannerMessage()" data-ar="إرسال" data-en="Send">إرسال</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title" data-ar="خطة الرحلة" data-en="Travel Plan">خطة الرحلة</h2>
+                    </div>
+                    <div id="plan-view" class="itinerary-container"></div>
+                </div>
+            </div>
+
+            <!-- Plans (My Plans) Tab -->
+            <div id="plans-tab" class="tab-content">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title" data-ar="خططي" data-en="My Plans">خططي</h2>
+                        <div class="panel-actions">
+                            <button class="action-btn" onclick="loadPlans()" title="Refresh">🔄</button>
+                        </div>
+                    </div>
+                    <div id="plans-list" class="itins-list"></div>
                 </div>
             </div>
 
@@ -187,17 +255,17 @@
         <footer class="footer">
             <div class="footer-content">
                 <div class="footer-section">
-                    <a href="https://github.com/Byqb" target="_blank" rel="noopener noreferrer" class="github-link">
+                        <a href="https://github.com/Byqb" target="_blank" rel="noopener noreferrer" class="github-link">
                         <svg class="github-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.374 0 0 5.373 0 12 0 17.302 3.438 21.8 8.207 23.387c.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
-                        <span>@Byqb</span>
-                    </a>
-                </div>
+                            <span>@Byqb</span>
+                        </a>
+                    </div>
                 <div class="footer-section">
-                    <span data-ar="© 2025 جميع الحقوق محفوظة" data-en="© 2025 All rights reserved">© 2025 جميع الحقوق محفوظة</span>
+                        <span data-ar="© 2025 جميع الحقوق محفوظة" data-en="© 2025 All rights reserved">© 2025 جميع الحقوق محفوظة</span>
+                    </div>
                 </div>
-            </div>
         </footer>
-    </div>
+            </div>
 
     <script>
         // Mobile and Touch Device Detection & Optimization
@@ -440,7 +508,7 @@
         
         async function checkAuth() {
             const res = await fetch('/api/auth/me');
-            const data = await res.json();
+                const data = await res.json();
             currentUser = data.user;
             if (currentUser) {
                 document.getElementById('auth-user').textContent = currentUser.email;
@@ -459,6 +527,193 @@
             // Re-apply language text for auth controls
             setLanguage(document.documentElement.lang);
         }
+
+		// ===== Planner (Plans + Chat + Rendering) =====
+		let currentPlanId = null;
+
+		function appendPlannerChat(role, text) {
+			const box = document.getElementById('planner-chat');
+			if (!box) return;
+			const row = document.createElement('div');
+			row.className = role === 'user' ? 'user-message' : 'assistant-message';
+			const content = document.createElement('div');
+			content.className = 'message-content';
+			content.textContent = text;
+			row.appendChild(content);
+			box.appendChild(row);
+			box.scrollTop = box.scrollHeight;
+		}
+
+		function displayItineraryArray(itineraryArray) {
+			const container = document.getElementById('plan-view');
+			if (!container) return;
+			container.innerHTML = '';
+			const currentLang = document.documentElement.lang;
+			const dayText = currentLang === 'ar' ? 'اليوم' : 'Day';
+			const labels = currentLang === 'ar' ? { morning: 'صباحاً', midday: 'منتصف اليوم', evening: 'نهاية اليوم' } : { morning: 'Morning', midday: 'Midday', evening: 'End of day' };
+			(itineraryArray || []).forEach(day => {
+				const daySection = document.createElement('div');
+				daySection.className = 'day-section';
+				const title = document.createElement('h3');
+				title.className = 'day-title';
+				title.textContent = `${dayText} ${day.day || ''}`;
+				daySection.appendChild(title);
+				['Morning','Midday','End of day'].forEach(slot => {
+					const list = (day.activities || []).filter(a => (a.time || '').toLowerCase() === slot.toLowerCase());
+					if (!list.length) return;
+					const sub = document.createElement('h4');
+					sub.className = 'time-bucket-title';
+					sub.textContent = labels[slot.toLowerCase()] || slot;
+					daySection.appendChild(sub);
+					list.forEach(a => {
+						const item = document.createElement('div');
+						item.className = 'activity';
+						const head = document.createElement('div'); head.className = 'activity-header';
+						const t = document.createElement('h5'); t.className = 'activity-title'; t.textContent = a.title || '';
+						head.appendChild(t);
+						const tm = document.createElement('span'); tm.className = 'activity-time'; tm.textContent = a.time || '';
+						head.appendChild(tm);
+						item.appendChild(head);
+						if (a.description) { const d = document.createElement('p'); d.className = 'activity-description'; d.textContent = a.description; item.appendChild(d); }
+						daySection.appendChild(item);
+					});
+				});
+				container.appendChild(daySection);
+			});
+		}
+
+		async function createOrLoadPlan(event) {
+			event.preventDefault();
+			const startDate = document.getElementById('plan-start').value;
+			const endDate = document.getElementById('plan-end').value;
+			const destination = document.getElementById('plan-destination').value.trim();
+			const interestsText = document.getElementById('plan-interests').value.trim();
+			const preferences = interestsText ? interestsText.split(',').map(s => s.trim()).filter(Boolean) : [];
+			if (!startDate || !endDate || !destination) return;
+			// Generate initial plan via AI
+			const loading = document.createElement('div'); loading.className = 'loading active'; loading.innerHTML = '<div class="spinner"></div>';
+			document.getElementById('plan-view').innerHTML = ''; document.getElementById('plan-view').appendChild(loading);
+			try {
+				const response = await fetch('/api/generate-itinerary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ startDate, endDate, destination, preferences, language: document.documentElement.lang }) });
+				const data = await response.json();
+				if (!response.ok) throw new Error(data.error?.message || 'Failed to generate');
+				// Create DB record
+				const createRes = await fetch('/api/itineraries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: destination, destination, startDate, endDate, language: document.documentElement.lang, plan: data }) });
+				const created = await createRes.json();
+				if (!createRes.ok) throw new Error(created.error?.message || 'Failed to save plan');
+				currentPlanId = created.id;
+				// Reset chat and render
+				document.getElementById('planner-chat').innerHTML = '';
+				appendPlannerChat('assistant', data.reply || (document.documentElement.lang === 'ar' ? 'تم إنشاء الخطة.' : 'Plan generated.'));
+				displayItineraryArray(data.itinerary || []);
+			} catch (e) {
+				document.getElementById('plan-view').innerHTML = `<div class="error-message">❌ ${e.message}</div>`;
+			}
+		}
+
+		function plannerKeypress(event) { if (event.key === 'Enter') sendPlannerMessage(); }
+
+		async function sendPlannerMessage() {
+			const input = document.getElementById('planner-input');
+			const text = (input.value || '').trim();
+			if (!text) return;
+			if (!currentPlanId) { appendPlannerChat('assistant', document.documentElement.lang === 'ar' ? 'ابدأ بإنشاء خطة أولاً.' : 'Start by creating a plan first.'); return; }
+			appendPlannerChat('user', text);
+			appendPlannerChat('assistant', '…');
+			input.value = '';
+			try {
+				const res = await fetch(`/api/itineraries/${currentPlanId}/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, language: document.documentElement.lang }) });
+				const data = await res.json();
+				const box = document.getElementById('planner-chat');
+				if (box && box.lastChild && box.lastChild.classList.contains('assistant-message')) {
+					box.lastChild.querySelector('.message-content').textContent = data.reply || 'OK';
+				}
+				if (data.plan && data.plan.itinerary) {
+					displayItineraryArray(data.plan.itinerary);
+				}
+			} catch (e) {
+				const box = document.getElementById('planner-chat');
+				if (box && box.lastChild && box.lastChild.classList.contains('assistant-message')) {
+					box.lastChild.querySelector('.message-content').textContent = '❌ ' + e.message;
+				}
+			}
+		}
+
+		async function loadPlans() {
+			const list = document.getElementById('plans-list');
+			list.innerHTML = '<div class="loading-small">Loading…</div>';
+			try {
+				const res = await fetch('/api/itineraries');
+				const data = await res.json();
+				const items = Array.isArray(data.itineraries) ? data.itineraries : [];
+				if (!items.length) { list.innerHTML = `<div class="text-center text-muted">${document.documentElement.lang === 'ar' ? 'لا توجد خطط' : 'No plans yet'}</div>`; return; }
+				list.innerHTML = items.map(it => `
+					<div class="itin-row">
+						<div>
+							<div class="itin-title">${(it.title || it.destination || '—')}</div>
+							<div class="itin-sub">${(it.destination || '—')} · ${it.startDate || ''} → ${it.endDate || ''}</div>
+						</div>
+						<div class="itin-actions">
+							<button class="action-btn" title="Open" onclick="openPlan('${it.id}')">📂</button>
+							<button class="action-btn" title="Rename" onclick="renamePlan('${it.id}')">✏️</button>
+							<button class="action-btn" title="Delete" onclick="deletePlan('${it.id}')">🗑️</button>
+						</div>
+					</div>
+				`).join('');
+			} catch (e) {
+				list.innerHTML = `<div class="error-message">❌ ${e.message}</div>`;
+			}
+		}
+
+		async function openPlan(id) {
+			try {
+				const res = await fetch(`/api/itineraries/${id}`);
+				const data = await res.json();
+				if (!res.ok) throw new Error(data.error?.message || 'Failed');
+				currentPlanId = id;
+				document.querySelector('.tab-button[onclick*="planning"]').click();
+				const chatBox = document.getElementById('planner-chat'); chatBox.innerHTML = '';
+				(data.messages || []).forEach(m => appendPlannerChat(m.role === 'user' ? 'user' : 'assistant', m.content));
+				if (data.itinerary && data.itinerary.plan && data.itinerary.plan.itinerary) {
+					displayItineraryArray(data.itinerary.plan.itinerary);
+				} else {
+					document.getElementById('plan-view').innerHTML = '';
+				}
+			} catch (e) {
+				alert(e.message);
+			}
+		}
+
+		async function renamePlan(id) {
+			const title = prompt(document.documentElement.lang === 'ar' ? 'اسم جديد للخطة:' : 'New plan title:');
+			if (!title) return;
+			try {
+				const res = await fetch(`/api/itineraries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title }) });
+				if (!res.ok) { const d = await res.json(); throw new Error(d.error?.message || 'Failed'); }
+				loadPlans();
+			} catch (e) { alert(e.message); }
+		}
+
+		async function deletePlan(id) {
+			if (!confirm(document.documentElement.lang === 'ar' ? 'حذف الخطة؟' : 'Delete plan?')) return;
+			try {
+				const res = await fetch(`/api/itineraries/${id}`, { method: 'DELETE' });
+				if (!res.ok) { const d = await res.json(); throw new Error(d.error?.message || 'Failed'); }
+				if (currentPlanId === id) { currentPlanId = null; document.getElementById('planner-chat').innerHTML = ''; document.getElementById('plan-view').innerHTML = ''; }
+				loadPlans();
+			} catch (e) { alert(e.message); }
+		}
+
+		async function showVersions() {
+			if (!currentPlanId) return;
+			try {
+				const res = await fetch(`/api/itineraries/${currentPlanId}/versions`);
+				const data = await res.json();
+				if (!res.ok) throw new Error(data.error?.message || 'Failed');
+				const lines = (data.versions || []).map(v => `${document.documentElement.lang === 'ar' ? 'إصدار' : 'Version'} ${v.version} – ${new Date(v.createdAt).toLocaleString()}`);
+				alert(lines.join('\n') || (document.documentElement.lang === 'ar' ? 'لا يوجد إصدارات بعد' : 'No versions yet'));
+			} catch (e) { alert(e.message); }
+		}
 
         // Photos Functions
         async function getPhotos() {

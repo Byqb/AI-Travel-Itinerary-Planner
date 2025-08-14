@@ -18,7 +18,8 @@ const isProd = process.env.NODE_ENV === 'production';
 // API config
 const API_URL = process.env.API_URL || "https://openrouter.ai/api/v1/chat/completions";
 const API_KEY = process.env.API_KEY;
-const MODEL = process.env.MODEL || "google/gemini-2.0-flash-exp:free";
+const MODEL = process.env.MODEL || "google/gemma-3n-e4b-it:free";
+//google/gemini-2.0-flash-exp:free
 
 // External services
 const UNSPLASH_API_KEY = "MhKFGuoBsYUjMVG-aih3dwVt7VhK1TJT6i9z78-x-gw"; // demo key placeholder
@@ -65,6 +66,15 @@ db.serialize(() => {
         itinerary_id TEXT NOT NULL,
         role TEXT NOT NULL,
         content TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (itinerary_id) REFERENCES itineraries(id)
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS itinerary_versions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        itinerary_id TEXT NOT NULL,
+        version_number INTEGER NOT NULL,
+        plan_json TEXT NOT NULL,
         created_at TEXT NOT NULL,
         FOREIGN KEY (itinerary_id) REFERENCES itineraries(id)
     )`);
@@ -147,7 +157,7 @@ function generatePrompt(startDate, endDate, destination, preferences, language) 
     const interests = preferences.join(', ');
 
     return (
-`${isArabic ? 'أنت مخطط رحلات.' : "You're a trip planner."} ${isArabic ? 'أنشئ خطة يومية بناءً فقط على الاهتمامات التي أذكرها دون إضافة أو تعديل أو ترجمة.' : 'Create a daily plan based solely on the interests I mention, without adding, modifying, or translating them.'}
+`${isArabic ? 'أنت مخطط رحلات.' : "You're a trip planner."} ${isArabic ? 'أنشئ خطة يومية مفصلة بمواعيد مناسبة ووصف قصير لكل نشاط.' : 'Create a detailed daily plan with suitable times and a short description for each activity.'}
 
 Trip: ${destination}
 Start: ${startDate}
@@ -156,11 +166,10 @@ Interests (copy exactly): ${interests}
 Days: ${days}
 
 Strict rules:
-- ${isArabic ? 'لكل يوم ثلاث فترات زمنية بالترتيب: Morning, Midday, End of day — نشاط واحد لكل فترة.' : 'Each day should contain three time periods in order: Morning, Midday, End of day — one interest each.'}
-- ${isArabic ? 'لا تضف أي وصف أو جملة بجانب الاهتمام؛ ضع الاهتمام بين أقواس مربعة فقط.' : "Don't add any description or sentence next to the interest; just enclose the interest as it is in square brackets."}
-- ${isArabic ? 'حقل العنوان يساوي نفس الوسم تماماً مثل [food].' : 'The title for each activity should be the same tag, such as [food].'}
-- ${isArabic ? 'حقل الوصف فارغ أو null.' : 'The description should be blank or null.'}
-- ${isArabic ? 'غط جميع الاهتمامات مرة واحدة على الأقل إن أمكن.' : 'Cover all interests at least once during the trip, if possible.'}
+- ${isArabic ? 'لكل يوم ثلاث فترات بالترتيب: Morning, Midday, End of day — نشاط واحد لكل فترة.' : 'Each day must have three periods in order: Morning, Midday, End of day — exactly one activity per period.'}
+- ${isArabic ? 'العنوان يطابق الوسم بين أقواس مربعة مثل [food] فقط.' : 'The title must be the tag in square brackets like [food] only.'}
+- ${isArabic ? 'الوصف قصير ومفيد (50-80 حرفاً) يشرح النشاط بإيجاز.' : 'The description is short and useful (50-80 chars) describing the activity briefly.'}
+- ${isArabic ? 'غط جميع الاهتمامات مرة واحدة على الأقل إن أمكن.' : 'Cover all interests at least once during the trip if possible.'}
 - ${isArabic ? 'لا تترجم كلمات الاهتمام مطلقاً. استخدمها كما هي بالضبط.' : 'Never translate interest words; use them exactly as given.'}
 
 Return JSON only in this exact shape:
@@ -171,9 +180,9 @@ Return JSON only in this exact shape:
     {
       "day": number,
       "activities": [
-        {"title": "[interest]", "description": null, "time": "Morning"},
-        {"title": "[interest]", "description": null, "time": "Midday"},
-        {"title": "[interest]", "description": null, "time": "End of day"}
+        {"title": "[interest]", "description": "short description", "time": "Morning"},
+        {"title": "[interest]", "description": "short description", "time": "Midday"},
+        {"title": "[interest]", "description": "short description", "time": "End of day"}
       ]
     }
   ]
@@ -275,12 +284,16 @@ router.get('/itineraries', requireAuth, async (req, res) => {
 
 router.post('/itineraries', requireAuth, async (req, res) => {
     try {
-        const { title = '', destination = '', startDate = '', endDate = '', language = 'en' } = req.body;
+        const { title = '', destination = '', startDate = '', endDate = '', language = 'en', plan } = req.body;
         if (!destination || !startDate || !endDate) return res.status(400).json({ error: { message: 'destination, startDate and endDate are required' } });
         const id = uuidv4();
         const now = new Date().toISOString();
+        const planJson = plan ? JSON.stringify(plan) : JSON.stringify({});
         await runAsync('INSERT INTO itineraries (id, user_id, title, destination, start_date, end_date, language, plan_json, archived, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,0,?,?)',
-            [id, req.session.userId, title || destination, destination, startDate, endDate, language, JSON.stringify({}), now, now]);
+            [id, req.session.userId, title || destination, destination, startDate, endDate, language, planJson, now, now]);
+        if (plan) {
+            await runAsync('INSERT INTO itinerary_versions (itinerary_id, version_number, plan_json, created_at) VALUES (?,?,?,?)', [id, 1, JSON.stringify(plan), now]);
+        }
         res.json({ id });
     } catch (err) {
         res.status(500).json({ error: { message: err.message } });
@@ -334,94 +347,7 @@ router.delete('/itineraries/:id', requireAuth, async (req, res) => {
     }
 });
 
-// Itineraries CRUD (manage multiple plans before generating or sharing)
-router.get('/itineraries', (req, res) => {
-    try {
-        const items = Array.from(userItineraries.values());
-        res.json({ items, total: items.length });
-    } catch (error) {
-        res.status(500).json({ error: { message: error.message } });
-    }
-});
-
-router.post('/itineraries', (req, res) => {
-    try {
-        const {
-            title = 'Untitled Trip',
-            destination = '',
-            startDate = '',
-            endDate = '',
-            preferences = [],
-            language = 'ar',
-            itinerary = []
-        } = req.body || {};
-        const id = uuidv4();
-        const now = new Date().toISOString();
-        const record = {
-            id,
-            title,
-            destination,
-            startDate,
-            endDate,
-            preferences: Array.isArray(preferences) ? preferences : [],
-            language,
-            itinerary: Array.isArray(itinerary) ? itinerary : [],
-            status: 'draft',
-            createdAt: now,
-            updatedAt: now,
-        };
-        userItineraries.set(id, record);
-        res.status(201).json(record);
-    } catch (error) {
-        res.status(500).json({ error: { message: error.message } });
-    }
-});
-
-router.get('/itineraries/:id', (req, res) => {
-    try {
-        const item = userItineraries.get(req.params.id);
-        if (!item) return res.status(404).json({ error: { message: 'Itinerary not found' } });
-        res.json(item);
-    } catch (error) {
-        res.status(500).json({ error: { message: error.message } });
-    }
-});
-
-router.put('/itineraries/:id', (req, res) => {
-    try {
-        const id = req.params.id;
-        const existing = userItineraries.get(id);
-        if (!existing) return res.status(404).json({ error: { message: 'Itinerary not found' } });
-        const payload = req.body || {};
-        const updated = {
-            ...existing,
-            title: payload.title ?? existing.title,
-            destination: payload.destination ?? existing.destination,
-            startDate: payload.startDate ?? existing.startDate,
-            endDate: payload.endDate ?? existing.endDate,
-            preferences: Array.isArray(payload.preferences) ? payload.preferences : existing.preferences,
-            language: payload.language ?? existing.language,
-            itinerary: Array.isArray(payload.itinerary) ? payload.itinerary : existing.itinerary,
-            status: payload.status ?? existing.status,
-            updatedAt: new Date().toISOString(),
-        };
-        userItineraries.set(id, updated);
-        res.json(updated);
-    } catch (error) {
-        res.status(500).json({ error: { message: error.message } });
-    }
-});
-
-router.delete('/itineraries/:id', (req, res) => {
-    try {
-        const id = req.params.id;
-        if (!userItineraries.has(id)) return res.status(404).json({ error: { message: 'Itinerary not found' } });
-        userItineraries.delete(id);
-        res.json({ ok: true });
-    } catch (error) {
-        res.status(500).json({ error: { message: error.message } });
-    }
-});
+// (Removed legacy in-memory itineraries endpoints)
 
 // Generate itinerary (strict JSON)
 router.post("/generate-itinerary", async (req, res) => {
@@ -479,7 +405,8 @@ router.post("/generate-itinerary", async (req, res) => {
                 if (t.includes('morning') || t.includes('صباح')) time = 'Morning';
                 else if (t.includes('midday') || t.includes('منتصف') || t.includes('ظهر')) time = 'Midday';
                 else if (t.includes('end of day') || t.includes('مساء') || t.includes('ليل')) time = 'End of day';
-                return { title, description: null, time };
+                const description = (typeof a.description === 'string') ? a.description.trim() : '';
+                return { title, description, time };
             }) : []
         })).map(day => {
             const order = ['Morning','Midday','End of day'];
@@ -627,14 +554,14 @@ router.post('/itinerary-chat', async (req, res) => {
 عندما تكتمل المعلومات، أنشئ خطة يومية. القواعد:
 - ثلاث فترات لكل يوم: "Morning", "Midday", "End of day".
 - عنوان كل نشاط يجب أن يكون وسم الاهتمام بين أقواس مربعة فقط مثل: [food].
-- الوصف يجب أن يكون null.
+- الوصف قصير ومفيد (50-80 حرفاً) لكل نشاط.
 - غطِّ جميع الاهتمامات مرة واحدة على الأقل إن أمكن.
 أعد JSON فقط بالشكل التالي ولا تضع نصاً خارجه:
-{"reply": "نص موجز", "meta": {"destination": string, "startDate": string, "endDate": string, "interests": string[]}, "itinerary": [{"day": number, "activities": [{"title": "[interest]", "description": null, "time": "Morning"}, {"title": "[interest]", "description": null, "time": "Midday"}, {"title": "[interest]", "description": null, "time": "End of day"}]}]}`
+{"reply": "نص موجز", "meta": {"destination": string, "startDate": string, "endDate": string, "interests": string[]}, "itinerary": [{"day": number, "activities": [{"title": "[interest]", "description": "short description", "time": "Morning"}, {"title": "[interest]", "description": "short description", "time": "Midday"}, {"title": "[interest]", "description": "short description", "time": "End of day"}]}]}`
             : `You are a chat-based trip planner. Be concise. Copy interest tags exactly; do not translate or add new ones.
-When enough info exists, build a plan with exactly these slots per day: "Morning", "Midday", "End of day". Each activity title must be exactly one bracketed interest like "[food]". description must be null. Cover all interests at least once if possible.
+When enough info exists, build a plan with exactly these slots per day: "Morning", "Midday", "End of day". Each activity title must be exactly one bracketed interest like "[food]". Add a short, useful description (50–80 chars) for each activity. Cover all interests at least once if possible.
 Return JSON only in this shape and nothing else:
-{"reply": "Brief text", "meta": {"destination": string, "startDate": string, "endDate": string, "interests": string[]}, "itinerary": [{"day": number, "activities": [{"title": "[interest]", "description": null, "time": "Morning"}, {"title": "[interest]", "description": null, "time": "Midday"}, {"title": "[interest]", "description": null, "time": "End of day"}]}]}`
+{"reply": "Brief text", "meta": {"destination": string, "startDate": string, "endDate": string, "interests": string[]}, "itinerary": [{"day": number, "activities": [{"title": "[interest]", "description": "short description", "time": "Morning"}, {"title": "[interest]", "description": "short description", "time": "Midday"}, {"title": "[interest]", "description": "short description", "time": "End of day"}]}]}`
         );
 
         const messages = [ { role: 'system', content: system }, ...session.history, { role: 'user', content: message } ];
@@ -662,7 +589,8 @@ Return JSON only in this shape and nothing else:
                         if (t.includes('morning') || t.includes('صباح')) time = 'Morning';
                         else if (t.includes('midday') || t.includes('منتصف') || t.includes('ظهر')) time = 'Midday';
                         else if (t.includes('end of day') || t.includes('مساء') || t.includes('ليل')) time = 'End of day';
-                        return { title, description: null, time };
+                        const description = (typeof a.description === 'string') ? a.description.trim() : '';
+                        return { title, description, time };
                     }) : []
                 })).map(day => {
                     const order = ['Morning','Midday','End of day'];
@@ -751,6 +679,10 @@ Return JSON only in this shape and nothing else:
         if (itineraryPlan) {
             const now = new Date().toISOString();
             await runAsync('UPDATE itineraries SET plan_json = ?, language = ?, updated_at = ? WHERE id = ?', [JSON.stringify(itineraryPlan), language || it.language, now, id]);
+            // Versioning: next version number
+            const v = await getAsync('SELECT MAX(version_number) as maxv FROM itinerary_versions WHERE itinerary_id = ?', [id]);
+            const nextV = (v && v.maxv ? Number(v.maxv) : 0) + 1;
+            await runAsync('INSERT INTO itinerary_versions (itinerary_id, version_number, plan_json, created_at) VALUES (?,?,?,?)', [id, nextV, JSON.stringify(itineraryPlan), now]);
         }
 
         const msgs = await allAsync('SELECT id, role, content, created_at as createdAt FROM messages WHERE itinerary_id = ? ORDER BY id ASC', [id]);
@@ -759,6 +691,18 @@ Return JSON only in this shape and nothing else:
     } catch (error) {
         console.error('Itinerary Persisted Chat Error:', error.response?.data || error.message);
         res.status(500).json({ error: { message: 'Chat service error' } });
+    }
+});
+
+// Versions API
+router.get('/itineraries/:id/versions', requireAuth, async (req, res) => {
+    try {
+        const it = await getAsync('SELECT id FROM itineraries WHERE id = ? AND user_id = ?', [req.params.id, req.session.userId]);
+        if (!it) return res.status(404).json({ error: { message: 'Not found' } });
+        const rows = await allAsync('SELECT id, version_number as version, created_at as createdAt FROM itinerary_versions WHERE itinerary_id = ? ORDER BY version_number ASC', [req.params.id]);
+        res.json({ versions: rows });
+    } catch (err) {
+        res.status(500).json({ error: { message: err.message } });
     }
 });
 
