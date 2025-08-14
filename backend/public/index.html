@@ -352,6 +352,27 @@
         let authMode = 'register';
         let currentUser = null;
 
+        // Networking helper with 429-aware retry/backoff
+        async function fetchJsonRetry(url, options = {}, retries = 3) {
+            let attempt = 0;
+            while (true) {
+                const res = await fetch(url, options);
+                const isJson = (res.headers.get('content-type') || '').includes('application/json');
+                if (res.status === 429 && attempt < retries) {
+                    const retryAfter = res.headers.get('Retry-After');
+                    const delayMs = retryAfter ? Math.ceil(Number(retryAfter) * 1000) : Math.min(10000, Math.round((500 * Math.pow(2, attempt)) + (Math.random() * 250)));
+                    await new Promise(r => setTimeout(r, delayMs));
+                    attempt++;
+                    continue;
+                }
+                const data = isJson ? await res.json().catch(() => ({})) : {};
+                if (!res.ok) {
+                    throw new Error((data && data.error && data.error.message) || res.statusText || 'Request failed');
+                }
+                return data;
+            }
+        }
+
         // Enhanced Particle System
         function createParticles() {
             const particlesContainer = document.getElementById('particles');
@@ -601,13 +622,9 @@
 			const loading = document.createElement('div'); loading.className = 'loading active'; loading.innerHTML = '<div class="spinner"></div>';
 			document.getElementById('plan-view').innerHTML = ''; document.getElementById('plan-view').appendChild(loading);
 			try {
-				const response = await fetch('/api/generate-itinerary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ startDate, endDate, destination, preferences, language: document.documentElement.lang }) });
-				const data = await response.json();
-				if (!response.ok) throw new Error(data.error?.message || 'Failed to generate');
+				const data = await fetchJsonRetry('/api/generate-itinerary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ startDate, endDate, destination, preferences, language: document.documentElement.lang }) });
 				// Create DB record
-				const createRes = await fetch('/api/itineraries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: destination, destination, startDate, endDate, language: document.documentElement.lang, plan: data }) });
-				const created = await createRes.json();
-				if (!createRes.ok) throw new Error(created.error?.message || 'Failed to save plan');
+				const created = await fetchJsonRetry('/api/itineraries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: destination, destination, startDate, endDate, language: document.documentElement.lang, plan: data }) });
 				currentPlanId = created.id;
 				// Reset chat and render
 				document.getElementById('planner-chat').innerHTML = '';
@@ -629,8 +646,7 @@
 			appendPlannerChat('assistant', '…');
 			input.value = '';
 			try {
-				const res = await fetch(`/api/itineraries/${currentPlanId}/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, language: document.documentElement.lang }) });
-				const data = await res.json();
+			const data = await fetchJsonRetry(`/api/itineraries/${currentPlanId}/chat`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, language: document.documentElement.lang }) });
 				const box = document.getElementById('planner-chat');
 				if (box && box.lastChild && box.lastChild.classList.contains('assistant-message')) {
 					box.lastChild.querySelector('.message-content').textContent = data.reply || 'OK';
@@ -732,10 +748,7 @@
             gallery.innerHTML = '<div class="loading-small">Loading photos...</div>';
             
             try {
-                const response = await fetch(`/api/photos/${encodeURIComponent(destination)}`);
-                const data = await response.json();
-                
-                if (!response.ok) throw new Error(data.error.message);
+                const data = await fetchJsonRetry(`/api/photos/${encodeURIComponent(destination)}`);
                 
                 gallery.innerHTML = `
                     <div class="photos-grid">
@@ -835,7 +848,7 @@
             chat.scrollTop = chat.scrollHeight;
             
             try {
-                const response = await fetch('/api/ai-assistant', {
+                const data = await fetchJsonRetry('/api/ai-assistant', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -844,13 +857,9 @@
                     })
                 });
                 
-                const data = await response.json();
-                
                 // Remove typing indicator
                 const typingElement = document.getElementById('typing-indicator');
                 if (typingElement) typingElement.remove();
-                
-                if (!response.ok) throw new Error(data.error.message);
                 
                 // Format and add assistant response with markdown support
                 const formattedResponse = formatMarkdown(data.response);
