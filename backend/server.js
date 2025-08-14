@@ -636,21 +636,30 @@ router.post('/itineraries/:id/chat', requireAuth, async (req, res) => {
         const isArabic = (language || it.language) === 'ar';
         const system = (
             isArabic
-            ? `أنت مخطط رحلات عبر الدردشة. التزم بالاختصار. انسخ الاهتمامات كما يذكرها المستخدم دون ترجمة أو إضافة.
-عندما تكتمل المعلومات، أنشئ خطة يومية. القواعد:
-- ثلاث فترات لكل يوم: "Morning", "Midday", "End of day".
-- عنوان كل نشاط يجب أن يكون وسم الاهتمام بين أقواس مربعة فقط مثل: [food].
-- الوصف يجب أن يكون null.
-- غطِّ جميع الاهتمامات مرة واحدة على الأقل إن أمكن.
-أعد JSON فقط بالشكل التالي ولا تضع نصاً خارجه:
-{"reply": "نص موجز", "meta": {"destination": string, "startDate": string, "endDate": string, "interests": string[]}, "itinerary": [{"day": number, "activities": [{"title": "[interest]", "description": null, "time": "Morning"}, {"title": "[interest]", "description": null, "time": "Midday"}, {"title": "[interest]", "description": null, "time": "End of day"}]}]}`
-            : `You are a chat-based trip planner. Be concise. Copy interest tags exactly; do not translate or add new ones.
-When enough info exists, build a plan with exactly these slots per day: "Morning", "Midday", "End of day". Each activity title must be exactly one bracketed interest like "[food]". description must be null. Cover all interests at least once if possible.
-Return JSON only in this shape and nothing else:
-{"reply": "Brief text", "meta": {"destination": string, "startDate": string, "endDate": string, "interests": string[]}, "itinerary": [{"day": number, "activities": [{"title": "[interest]", "description": null, "time": "Morning"}, {"title": "[interest]", "description": null, "time": "Midday"}, {"title": "[interest]", "description": null, "time": "End of day"}]}]}`
+            ? `أنت محرر خطط رحلات عبر الدردشة. كل رسالة من المستخدم قد تطلب تعديل الخطة الحالية بإضافة يوم، حذف يوم، أو تعديل الأنشطة.
+القواعد:
+- ثلاث فترات لكل يوم: "Morning", "Midday", "End of day" (نشاط واحد لكل فترة).
+- عنوان كل نشاط هو الوسم بين أقواس مربعة مثل [food] فقط.
+- الوصف قصير ومفيد (50-80 حرفاً) لكل نشاط.
+- إذا طلب المستخدم إضافة/حذف أيام، حدث عدد الأيام وفقاً لذلك ثم أعد ترقيم الأيام من 1.
+- إذا تغير عدد الأيام، حدّث الحقول meta.startDate أو meta.endDate بما يناسب (احفظ نفس الوجهة واللغة).
+أعد JSON فقط بالشكل التالي:
+{"reply": "نص موجز", "meta": {"destination": string, "startDate": string, "endDate": string, "interests": string[]}, "itinerary": [{"day": number, "activities": [{"title": "[interest]", "description": "short description", "time": "Morning"}, {"title": "[interest]", "description": "short description", "time": "Midday"}, {"title": "[interest]", "description": "short description", "time": "End of day"}]}]}`
+            : `You are a chat-based trip plan editor. Each user message may request modifying the existing plan by adding days, removing days, or changing activities.
+Rules:
+- Per day slots: "Morning", "Midday", "End of day" (exactly one activity each).
+- Activity title is the bracketed tag like [food] only.
+- Description is short and useful (50–80 chars) for each activity.
+- If the user adds/removes days, update the total days accordingly and renumber days starting at 1.
+- If day count changes, update meta.startDate or meta.endDate appropriately (keep destination/language).
+Return JSON only in this shape:
+{"reply": "Brief text", "meta": {"destination": string, "startDate": string, "endDate": string, "interests": string[]}, "itinerary": [{"day": number, "activities": [{"title": "[interest]", "description": "short description", "time": "Morning"}, {"title": "[interest]", "description": "short description", "time": "Midday"}, {"title": "[interest]", "description": "short description", "time": "End of day"}]}]}`
         );
 
-        const messages = [ { role: 'system', content: system }, ...history, { role: 'user', content: message } ];
+        // Include current plan JSON as context to guide edits
+        const currentPlanJson = it.plan_json ? JSON.stringify(JSON.parse(it.plan_json), null, 0) : '';
+        const planContextMsg = currentPlanJson ? [{ role: 'system', content: (isArabic ? 'الخطة الحالية:' : 'Current plan:') + ' ' + currentPlanJson }] : [];
+        const messages = [ { role: 'system', content: system }, ...planContextMsg, ...history, { role: 'user', content: message } ];
 
         // Persist user message first
         await runAsync('INSERT INTO messages (itinerary_id, role, content, created_at) VALUES (?,?,?,?)', [id, 'user', message, new Date().toISOString()]);
@@ -678,7 +687,9 @@ Return JSON only in this shape and nothing else:
         // Persist latest structured plan
         if (itineraryPlan) {
             const now = new Date().toISOString();
-            await runAsync('UPDATE itineraries SET plan_json = ?, language = ?, updated_at = ? WHERE id = ?', [JSON.stringify(itineraryPlan), language || it.language, now, id]);
+            const newStart = payload?.meta?.startDate || null;
+            const newEnd = payload?.meta?.endDate || null;
+            await runAsync('UPDATE itineraries SET plan_json = ?, language = ?, start_date = COALESCE(?, start_date), end_date = COALESCE(?, end_date), updated_at = ? WHERE id = ?', [JSON.stringify(itineraryPlan), language || it.language, newStart, newEnd, now, id]);
             // Versioning: next version number
             const v = await getAsync('SELECT MAX(version_number) as maxv FROM itinerary_versions WHERE itinerary_id = ?', [id]);
             const nextV = (v && v.maxv ? Number(v.maxv) : 0) + 1;

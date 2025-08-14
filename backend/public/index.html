@@ -531,7 +531,7 @@
 		// ===== Planner (Plans + Chat + Rendering) =====
 		let currentPlanId = null;
 
-		function appendPlannerChat(role, text) {
+		function appendPlannerChat(role, text, ts) {
 			const box = document.getElementById('planner-chat');
 			if (!box) return;
 			const row = document.createElement('div');
@@ -540,6 +540,13 @@
 			content.className = 'message-content';
 			content.textContent = text;
 			row.appendChild(content);
+			const meta = document.createElement('div');
+			meta.className = 'msg-meta';
+			try {
+				const d = ts ? new Date(ts) : new Date();
+				meta.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+			} catch { meta.textContent = '' }
+			row.appendChild(meta);
 			box.appendChild(row);
 			box.scrollTop = box.scrollHeight;
 		}
@@ -604,7 +611,7 @@
 				currentPlanId = created.id;
 				// Reset chat and render
 				document.getElementById('planner-chat').innerHTML = '';
-				appendPlannerChat('assistant', data.reply || (document.documentElement.lang === 'ar' ? 'تم إنشاء الخطة.' : 'Plan generated.'));
+				appendPlannerChat('assistant', data.reply || (document.documentElement.lang === 'ar' ? 'تم إنشاء الخطة.' : 'Plan generated.'), new Date().toISOString());
 				displayItineraryArray(data.itinerary || []);
 			} catch (e) {
 				document.getElementById('plan-view').innerHTML = `<div class="error-message">❌ ${e.message}</div>`;
@@ -618,7 +625,7 @@
 			const text = (input.value || '').trim();
 			if (!text) return;
 			if (!currentPlanId) { appendPlannerChat('assistant', document.documentElement.lang === 'ar' ? 'ابدأ بإنشاء خطة أولاً.' : 'Start by creating a plan first.'); return; }
-			appendPlannerChat('user', text);
+			appendPlannerChat('user', text, new Date().toISOString());
 			appendPlannerChat('assistant', '…');
 			input.value = '';
 			try {
@@ -627,6 +634,7 @@
 				const box = document.getElementById('planner-chat');
 				if (box && box.lastChild && box.lastChild.classList.contains('assistant-message')) {
 					box.lastChild.querySelector('.message-content').textContent = data.reply || 'OK';
+					const meta = box.lastChild.querySelector('.msg-meta'); if (meta) meta.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 				}
 				if (data.plan && data.plan.itinerary) {
 					displayItineraryArray(data.plan.itinerary);

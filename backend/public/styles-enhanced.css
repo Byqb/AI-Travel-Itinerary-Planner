@@ -1163,6 +1163,12 @@ html[lang="en"], html[lang="en"] body {
     margin-left: auto;
 }
 
+.msg-meta {
+    margin-top: 6px;
+    font-size: 0.75rem;
+    opacity: 0.75;
+}
+
 .assistant-input {
     display: flex;
     gap: 0.5rem;
