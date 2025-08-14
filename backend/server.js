@@ -4,37 +4,30 @@ const cors = require("cors");
 const { v4: uuidv4 } = require('uuid');
 const compression = require('compression');
 const helmet = require('helmet');
-const { InferenceClient } = require("@huggingface/inference");
 require('dotenv').config(); // Load environment variables
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ✅ API Keys and Configuration (from environment variables)
-const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const API_KEY = "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";
-const MODEL = "google/gemini-2.0-flash-exp:free";
-
-// Hugging Face Configuration
-const HF_TOKEN = process.env.HF_TOKEN;
-const hfClient = HF_TOKEN ? new InferenceClient(HF_TOKEN) : null;
+const API_URL = process.env.API_URL || "https://openrouter.ai/api/v1/chat/completions";
+const API_KEY = process.env.API_KEY;
+const MODEL = process.env.MODEL || "google/gemini-2.0-flash-exp:free";
 
 // API Keys for external services
-const WEATHER_API_KEY = "d701b1c771740ae18c33267ff2da7c8d"; // OpenWeatherMap API key
-const CURRENCY_API_KEY = "64a23a612eb109bc1aa19adb"; // ExchangeRate API key
 const UNSPLASH_API_KEY = "MhKFGuoBsYUjMVG-aih3dwVt7VhK1TJT6i9z78-x-gw"; // Unsplash API key
 
 // Check if API key is configured
-if (!API_KEY && !HF_TOKEN) {
-    console.warn('⚠️  No AI API keys found in environment variables. AI features will be disabled.');
-} else if (HF_TOKEN) {
-    console.log('✅ Using Hugging Face Inference API for AI features');
+if (!API_KEY) {
+    console.warn('⚠️  No AI API key found. AI features will be disabled.');
 } else if (API_KEY) {
     console.log('✅ Using OpenRouter API for AI features');
 }
 
 // In-memory storage for demo (use database in production)
 const savedItineraries = new Map();
+// In-memory chat sessions for itinerary planning
+const chatSessions = new Map();
 
 // Enhanced Middleware
 app.use(helmet({
@@ -66,14 +59,14 @@ app.use((err, req, res, next) => {
     });
 });
 
-function generatePrompt(startDate, endDate, destination, preferences, language, travelers = 1) {
+function generatePrompt(startDate, endDate, destination, preferences, language) {
     const start = new Date(startDate);
     const end = new Date(endDate);
     const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
     
     const isArabic = language === 'ar';
     
-    return `${isArabic ? 'إنشاء' : 'Create'} a detailed ${days}-day travel itinerary for ${travelers} ${travelers > 1 ? 'travelers' : 'traveler'} visiting ${destination}. 
+    return `${isArabic ? 'إنشاء' : 'Create'} a detailed ${days}-day travel itinerary for a trip to ${destination}. 
     ${isArabic ? 'تبدأ الرحلة في' : 'The trip starts on'} ${startDate} ${isArabic ? 'وتنتهي في' : 'and ends on'} ${endDate}.
     ${isArabic ? 'الاهتمامات:' : 'Travel preferences:'} ${preferences.join(', ')}.
     
@@ -81,7 +74,7 @@ function generatePrompt(startDate, endDate, destination, preferences, language, 
     1. ${isArabic ? '3-4 نشاطات في اليوم' : '3-4 activities per day'}
     2. ${isArabic ? 'وصف مختصر ومفيد لكل نشاط' : 'Brief and helpful descriptions for each activity'}
     3. ${isArabic ? 'مراعاة الاهتمامات المذكورة' : 'Consider the preferences mentioned'}
-    4. ${isArabic ? 'جعلها واقعية وعملية ومناسبة للميزانية' : 'Make it realistic, practical, and budget-conscious'}
+    4. ${isArabic ? 'جعلها واقعية وعملية' : 'Make it realistic and practical'}
     5. ${isArabic ? 'تضمين أوقات تقريبية للأنشطة' : 'Include approximate timings for activities'}
     
     ${isArabic ? 'قم بتنسيق الرد كمصفوفة JSON من الأيام، حيث يحتوي كل يوم على:' : 'Format the response as a JSON array of days, where each day has:'}
@@ -111,9 +104,9 @@ app.use('/api', express.Router()
         
         console.log(`[${requestId}] Starting itinerary generation`);
           try {
-            const { startDate, endDate, destination, preferences, language, travelers } = req.body;
-              // Check if any AI service is available
-            if (!HF_TOKEN && !API_KEY) {
+                        const { startDate, endDate, destination, preferences, language } = req.body;
+                            // Check if AI service is available
+                        if (!API_KEY) {
                 throw new Error(
                     language === 'ar' 
                         ? 'خدمة الذكاء الاصطناعي غير متوفرة حالياً'
@@ -138,31 +131,11 @@ app.use('/api', express.Router()
 
             console.log(`[${requestId}] Generating itinerary for ${destination} in ${language}`);
 
-            const prompt = generatePrompt(startDate, endDate, destination, preferences, language, travelers);
-              let response;
+                        const prompt = generatePrompt(startDate, endDate, destination, preferences, language);
+                            let response;
             try {
-                // Try Hugging Face first, then fallback to OpenRouter
-                if (hfClient) {
-                    console.log(`[${requestId}] Using Hugging Face Inference API`);
-                    const chatCompletion = await hfClient.chatCompletion({
-                        provider: "featherless-ai",
-                        model: "deepseek-ai/DeepSeek-V3-0324",
-                        messages: [{ role: "user", content: prompt }],
-                        max_tokens: 2000,
-                        temperature: 0.7
-                    });
-                    
-                    // Create response format compatible with existing code
-                    response = {
-                        data: {
-                            choices: [{
-                                message: {
-                                    content: chatCompletion.choices[0].message.content
-                                }
-                            }]
-                        }
-                    };
-                } else if (API_KEY) {
+                                // Use OpenRouter API
+                                if (API_KEY) {
                     console.log(`[${requestId}] Using OpenRouter API`);
                     response = await axios.post(
                         API_URL,
@@ -281,252 +254,6 @@ app.use('/api', express.Router()
                 }
             });
         }
-    })    // 🌤️ Weather API
-    .get("/weather/:city", async (req, res) => {
-        try {
-            const { city } = req.params;
-            const { language = 'en' } = req.query;
-            
-            if (WEATHER_API_KEY === "demo_key") {
-                // Demo weather data fallback
-                const mockWeatherData = {
-                    city: city,
-                    country: "Demo Country",
-                    current: {
-                        temperature: Math.floor(Math.random() * 30) + 15,
-                        description: language === 'ar' ? 'غائم جزئياً' : 'Partly Cloudy',
-                        humidity: Math.floor(Math.random() * 40) + 40,
-                        windSpeed: Math.floor(Math.random() * 15) + 5,
-                        icon: '02d'
-                    },
-                    forecast: Array.from({ length: 5 }, (_, i) => ({
-                        date: new Date(Date.now() + (i + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        temperature: {
-                            min: Math.floor(Math.random() * 15) + 10,
-                            max: Math.floor(Math.random() * 20) + 20
-                        },
-                        description: language === 'ar' ? 'مشمس' : 'Sunny',
-                        icon: '01d'
-                    }))
-                };
-                return res.json(mockWeatherData);
-            }
-
-            // Real OpenWeatherMap API calls
-            const weatherLang = language === 'ar' ? 'ar' : 'en';
-            
-            // Get current weather
-            const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${WEATHER_API_KEY}&units=metric&lang=${weatherLang}`;
-            const currentResponse = await axios.get(currentWeatherUrl);
-            const currentData = currentResponse.data;
-            
-            // Get forecast
-            const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${WEATHER_API_KEY}&units=metric&lang=${weatherLang}`;
-            const forecastResponse = await axios.get(forecastUrl);
-            const forecastData = forecastResponse.data;
-            
-            // Process forecast data (get daily forecast)
-            const dailyForecast = [];
-            const processedDates = new Set();
-            
-            forecastData.list.forEach(item => {
-                const date = item.dt_txt.split(' ')[0];
-                if (!processedDates.has(date) && dailyForecast.length < 5) {
-                    processedDates.add(date);
-                    dailyForecast.push({
-                        date: date,
-                        temperature: {
-                            min: Math.round(item.main.temp_min),
-                            max: Math.round(item.main.temp_max)
-                        },
-                        description: item.weather[0].description,
-                        icon: item.weather[0].icon
-                    });
-                }
-            });
-
-            const weatherData = {
-                city: currentData.name,
-                country: currentData.sys.country,
-                current: {
-                    temperature: Math.round(currentData.main.temp),
-                    description: currentData.weather[0].description,
-                    humidity: currentData.main.humidity,
-                    windSpeed: Math.round(currentData.wind.speed * 3.6), // Convert m/s to km/h
-                    icon: currentData.weather[0].icon
-                },
-                forecast: dailyForecast
-            };
-
-            res.json(weatherData);
-        } catch (error) {
-            console.error('Weather API Error:', error.response?.data || error.message);
-            res.status(500).json({ error: { message: 'Failed to fetch weather data' } });
-        }
-    })    // 💰 Budget Estimation API
-    .post("/estimate-budget", async (req, res) => {
-        try {
-            const { destination, startDate, endDate, travelers = 1, budgetType = 'medium' } = req.body;
-            
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-            
-            // Budget multipliers based on type
-            const multipliers = {
-                budget: 0.7,
-                medium: 1.0,
-                luxury: 1.8
-            };
-            
-            const multiplier = multipliers[budgetType] || 1.0;
-            
-            // Base daily costs (in USD)
-            const baseCosts = {
-                accommodation: 80 * multiplier,
-                food: 40 * multiplier,
-                transport: 30 * multiplier,
-                activities: 50 * multiplier,
-                shopping: 25 * multiplier,
-                miscellaneous: 20 * multiplier
-            };
-            
-            const breakdown = {};
-            let total = 0;
-            
-            Object.entries(baseCosts).forEach(([category, dailyCost]) => {
-                const categoryTotal = dailyCost * days * travelers;
-                breakdown[category] = {
-                    daily: Math.round(dailyCost),
-                    total: Math.round(categoryTotal)
-                };
-                total += categoryTotal;
-            });
-            
-            res.json({
-                destination,
-                duration: days,
-                travelers,
-                budgetType,
-                currency: 'USD',
-                total: Math.round(total),
-                breakdown,
-                recommendations: [
-                    budgetType === 'budget' ? 'Consider hostels and street food' : null,
-                    budgetType === 'luxury' ? 'Include spa treatments and fine dining' : null,
-                    'Book flights 2-3 months in advance for better prices',
-                    'Look for package deals that include accommodation and activities'
-                ].filter(Boolean)
-            });
-        } catch (error) {
-            res.status(500).json({ error: { message: error.message } });
-        }
-    })
-
-    // 🧳 Packing List API
-    .post("/packing-list", async (req, res) => {
-        try {
-            const { destination, startDate, endDate, activities = [], language = 'en' } = req.body;
-            
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-            
-            // Generate AI-powered packing list
-            const prompt = `Generate a comprehensive packing list for a ${days}-day trip to ${destination}. 
-            Activities include: ${activities.join(', ')}.
-            ${language === 'ar' ? 'اكتب القائمة باللغة العربية' : 'Write the list in English'}.
-            
-            Format as JSON with categories: clothing, toiletries, electronics, documents, health, accessories.
-            Each category should have an array of items with name and importance (essential/recommended/optional).`;
-            
-            // For demo, return a mock packing list
-            const packingList = {
-                clothing: [
-                    { name: language === 'ar' ? 'ملابس داخلية' : 'Underwear', importance: 'essential' },
-                    { name: language === 'ar' ? 'جوارب' : 'Socks', importance: 'essential' },
-                    { name: language === 'ar' ? 'قمصان' : 'T-shirts', importance: 'essential' },
-                    { name: language === 'ar' ? 'بنطلون' : 'Pants', importance: 'essential' },
-                    { name: language === 'ar' ? 'جاكيت' : 'Jacket', importance: 'recommended' }
-                ],
-                toiletries: [
-                    { name: language === 'ar' ? 'فرشاة أسنان' : 'Toothbrush', importance: 'essential' },
-                    { name: language === 'ar' ? 'معجون أسنان' : 'Toothpaste', importance: 'essential' },
-                    { name: language === 'ar' ? 'شامبو' : 'Shampoo', importance: 'essential' },
-                    { name: language === 'ar' ? 'واقي الشمس' : 'Sunscreen', importance: 'recommended' }
-                ],
-                electronics: [
-                    { name: language === 'ar' ? 'شاحن الهاتف' : 'Phone charger', importance: 'essential' },
-                    { name: language === 'ar' ? 'كاميرا' : 'Camera', importance: 'recommended' },
-                    { name: language === 'ar' ? 'سماعات' : 'Headphones', importance: 'optional' }
-                ],
-                documents: [
-                    { name: language === 'ar' ? 'جواز السفر' : 'Passport', importance: 'essential' },
-                    { name: language === 'ar' ? 'تذاكر الطيران' : 'Flight tickets', importance: 'essential' },
-                    { name: language === 'ar' ? 'تأمين السفر' : 'Travel insurance', importance: 'recommended' }
-                ],
-                health: [
-                    { name: language === 'ar' ? 'الأدوية الشخصية' : 'Personal medications', importance: 'essential' },
-                    { name: language === 'ar' ? 'علبة إسعافات أولية' : 'First aid kit', importance: 'recommended' }
-                ],
-                accessories: [
-                    { name: language === 'ar' ? 'نظارات شمسية' : 'Sunglasses', importance: 'recommended' },
-                    { name: language === 'ar' ? 'قبعة' : 'Hat', importance: 'optional' },
-                    { name: language === 'ar' ? 'حقيبة يد' : 'Daypack', importance: 'recommended' }
-                ]
-            };
-            
-            res.json({
-                destination,
-                duration: days,
-                packingList,
-                totalItems: Object.values(packingList).reduce((total, category) => total + category.length, 0),
-                essentialItems: Object.values(packingList).reduce((total, category) => 
-                    total + category.filter(item => item.importance === 'essential').length, 0)
-            });
-        } catch (error) {
-            res.status(500).json({ error: { message: error.message } });
-        }
-    })
-
-    // 💡 Travel Tips API
-    .post("/travel-tips", async (req, res) => {
-        try {
-            const { destination, language = 'en' } = req.body;
-            
-            // Demo travel tips (replace with AI-generated content)
-            const tips = {
-                cultural: [
-                    language === 'ar' ? 'احترم التقاليد المحلية' : 'Respect local customs and traditions',
-                    language === 'ar' ? 'تعلم بعض العبارات الأساسية' : 'Learn basic phrases in the local language',
-                    language === 'ar' ? 'اللباس المناسب للثقافة المحلية' : 'Dress appropriately for the local culture'
-                ],
-                safety: [
-                    language === 'ar' ? 'احتفظ بنسخ من وثائقك المهمة' : 'Keep copies of important documents',
-                    language === 'ar' ? 'شارك خطة رحلتك مع أحد' : 'Share your itinerary with someone',
-                    language === 'ar' ? 'احتفظ بأرقام الطوارئ' : 'Keep emergency contact numbers handy'
-                ],
-                money: [
-                    language === 'ar' ? 'استخدم بطاقات ائتمان آمنة' : 'Use secure credit cards',
-                    language === 'ar' ? 'احمل بعض النقود المحلية' : 'Carry some local currency',
-                    language === 'ar' ? 'تجنب الصرافات غير الآمنة' : 'Avoid unsafe ATMs'
-                ],
-                health: [
-                    language === 'ar' ? 'احصل على التطعيمات المطلوبة' : 'Get required vaccinations',
-                    language === 'ar' ? 'اشرب الماء المعبأ في زجاجات' : 'Drink bottled water',
-                    language === 'ar' ? 'احمل تأمين صحي للسفر' : 'Carry travel health insurance'
-                ]
-            };
-            
-            res.json({
-                destination,
-                tips,
-                language,
-                lastUpdated: new Date().toISOString()
-            });
-        } catch (error) {
-            res.status(500).json({ error: { message: error.message } });
-        }
     })    // 📸 Destination Photos API
     .get("/photos/:destination", async (req, res) => {
         try {
@@ -635,8 +362,8 @@ app.use('/api', express.Router()
         try {
             const { message, language = 'en', context = {} } = req.body;
             
-            // Check if any AI service is available
-            if (!HF_TOKEN && !API_KEY) {
+            // Check if AI service is available
+            if (!API_KEY) {
                 return res.status(503).json({
                     error: {
                         message: language === 'ar' 
@@ -673,53 +400,8 @@ app.use('/api', express.Router()
             
             let reply;
             
-            // Try Hugging Face first, then fallback to OpenRouter
-            if (hfClient) {
-                try {
-                    console.log('Using Hugging Face Inference API');
-                    const chatCompletion = await hfClient.chatCompletion({
-                        provider: "featherless-ai",
-                        model: "deepseek-ai/DeepSeek-V3-0324",
-                        messages: [{ role: "user", content: prompt }],
-                        max_tokens: 1000,
-                        temperature: 0.7
-                    });
-                    
-                    reply = chatCompletion.choices[0].message.content;
-                } catch (hfError) {
-                    console.error('Hugging Face API Error:', hfError.message);
-                    
-                    // Fallback to OpenRouter if available
-                    if (API_KEY) {
-                        console.log('Falling back to OpenRouter API');
-                        const response = await axios.post(
-                            API_URL,
-                            {
-                                model: MODEL,
-                                messages: [{ role: "user", content: prompt }]
-                            },
-                            {
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    Authorization: `Bearer ${API_KEY}`,
-                                    "HTTP-Referer": process.env.APP_URL || "http://localhost:3000",
-                                    "X-Title": "ai-travel-assistant"
-                                },
-                                timeout: 15000
-                            }
-                        );
-                        
-                        if (!response.data?.choices?.[0]?.message?.content) {
-                            throw new Error('Invalid AI response from OpenRouter');
-                        }
-                        
-                        reply = response.data.choices[0].message.content;
-                    } else {
-                        throw hfError;
-                    }
-                }
-            } else if (API_KEY) {
-                // Use OpenRouter only
+            if (API_KEY) {
+                // Use OpenRouter
                 console.log('Using OpenRouter API');
                 const response = await axios.post(
                     API_URL,
@@ -748,7 +430,7 @@ app.use('/api', express.Router()
             res.json({
                 response: reply,
                 timestamp: new Date().toISOString(),
-                provider: hfClient ? 'huggingface' : 'openrouter'
+                provider: 'openrouter'
             });
         } catch (error) {
             console.error('AI Assistant Error:', error.response?.data || error.message);
@@ -776,6 +458,143 @@ app.use('/api', express.Router()
             }
         }
     })
+
+    // 💬 Itinerary Chat API (plan + refine via conversation)
+    .post('/itinerary-chat', async (req, res) => {
+        try {
+            const { chatId, message, language = 'en' } = req.body;
+            if (!API_KEY) {
+                return res.status(503).json({ error: { message: 'AI service is currently unavailable' } });
+            }
+            if (!message || typeof message !== 'string') {
+                return res.status(400).json({ error: { message: 'Message is required' } });
+            }
+
+            // Get or create session
+            const id = chatId || uuidv4();
+            const session = chatSessions.get(id) || {
+                history: [],
+                itinerary: null,
+                meta: { destination: '', startDate: '', endDate: '', interests: [] },
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            // Build system instructions to always return a strict JSON object
+            const isArabic = language === 'ar';
+                        const system = (
+                isArabic
+                                        ? `أنت مخطط رحلات عبر الدردشة. تحدث باختصار واطلب أي معلومات ناقصة (تاريخ البداية، تاريخ النهاية، الوجهة، الاهتمامات).
+عند ذكر الاهتمامات من قبل المستخدم، انسخ الكلمات نفسها بدون ترجمة أو إعادة صياغة أو إضافة اهتمامات جديدة. لا تقترح اهتمامات إضافية إلا إذا طلب المستخدم ذلك صراحة.
+عندما تكون المعلومات كافية، أنشئ أو حدّث خطة الرحلة اليومية بناءً على الاهتمامات المذكورة فقط.
+أعد دائماً استجابة JSON فقط بهذه البنية:
+{
+  "reply": "نص موجز للمستخدم",
+    "meta": {"destination": string, "startDate": string, "endDate": string, "interests": string[]},
+  "itinerary": [ {"day": number, "activities": [{"title": string, "description": string, "time"?: string}] } ] | null
+}
+لا تُرجع أي نص خارج JSON.`
+                                        : `You are a chat-based trip planner. Be concise. Ask for any missing info (start date, end date, destination, interests).
+When the user states interests, copy their words exactly into an interests array, without translating, rephrasing, or adding new interests. Do not infer or add interests unless the user explicitly asks.
+When enough info exists, create or update a day-by-day itinerary strictly aligned to the stated interests only.
+Always return JSON only with this exact shape:
+{
+  "reply": "short assistant message",
+    "meta": {"destination": string, "startDate": string, "endDate": string, "interests": string[]},
+  "itinerary": [ {"day": number, "activities": [{"title": string, "description": string, "time"?: string}] } ] | null
+}
+Do not include any text outside JSON.`
+            );
+
+            // Compose messages: system + session history + new user message
+            const messages = [
+                { role: 'system', content: system },
+                ...session.history,
+                { role: 'user', content: message }
+            ];
+
+            // Call OpenRouter
+            const response = await axios.post(
+                API_URL,
+                {
+                    model: MODEL,
+                    messages
+                },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${API_KEY}`,
+                        'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
+                        'X-Title': 'itinerary-chat'
+                    },
+                    timeout: 30000
+                }
+            );
+
+            const content = response.data?.choices?.[0]?.message?.content || '';
+
+            // Try to parse JSON strictly; if failed, attempt to extract JSON object
+            let payload;
+            try {
+                payload = JSON.parse(content);
+            } catch (_) {
+                const match = content.match(/\{[\s\S]*\}/);
+                if (match) {
+                    try { payload = JSON.parse(match[0]); } catch { /* ignore */ }
+                }
+            }
+
+            let replyText = '';
+            let itinerary = null;
+            let meta = session.meta;
+            if (payload && typeof payload === 'object') {
+                if (typeof payload.reply === 'string') replyText = payload.reply;
+                if (payload.meta && typeof payload.meta === 'object') {
+                    meta = {
+                        destination: payload.meta.destination || meta.destination || '',
+                        startDate: payload.meta.startDate || meta.startDate || '',
+                        endDate: payload.meta.endDate || meta.endDate || '',
+                        // Do NOT override interests here; the UI decides and sends via save/generate endpoints
+                        interests: Array.isArray(meta.interests) ? meta.interests : []
+                    };
+                }
+                if (Array.isArray(payload.itinerary)) {
+                    // Normalize itinerary
+                    itinerary = payload.itinerary.map(day => ({
+                        day: Number(day.day) || 1,
+                        activities: Array.isArray(day.activities) ? day.activities.map(a => ({
+                            title: a.title || '',
+                            description: a.description || '',
+                            time: a.time || undefined
+                        })) : []
+                    }));
+                }
+            }
+
+            // Fallback reply if parsing failed
+            if (!replyText) {
+                replyText = isArabic ? 'يرجى توضيح الرسالة.' : 'Please clarify your request.';
+            }
+
+            // Update session history and state
+            session.history.push({ role: 'user', content: message });
+            session.history.push({ role: 'assistant', content: replyText });
+            session.meta = meta;
+            if (itinerary) session.itinerary = itinerary;
+            session.updatedAt = new Date().toISOString();
+            chatSessions.set(id, session);
+
+            res.json({
+                chatId: id,
+                reply: replyText,
+                meta,
+                itinerary: session.itinerary || null
+            });
+        } catch (error) {
+            console.error('Itinerary Chat Error:', error.response?.data || error.message);
+            res.status(500).json({ error: { message: 'Chat service error' } });
+        }
+    })
 );
 
 // Health check endpoint
@@ -787,10 +606,6 @@ app.get("/api/health", (req, res) => {
         version: "2.0.0",
         features: [
             "AI Itinerary Generation",
-            "Weather Forecasts",
-            "Budget Estimation",
-            "Packing Lists",
-            "Travel Tips",
             "Photo Galleries",
             "Itinerary Sharing",
             "AI Travel Assistant"
@@ -802,10 +617,7 @@ app.listen(PORT, () => {
     console.log(`✅ Server running at http://localhost:${PORT}`);
     console.log(`📝 Enhanced API Documentation:`);
     console.log(`   POST /api/generate-itinerary - Generate travel itinerary`);
-    console.log(`   GET  /api/weather/:city - Get weather forecast`);
-    console.log(`   POST /api/estimate-budget - Budget estimation`);
-    console.log(`   POST /api/packing-list - Generate packing list`);
-    console.log(`   POST /api/travel-tips - Get travel tips`);
+    console.log(`   POST /api/itinerary-chat - Plan and refine via chat`);
     console.log(`   GET  /api/photos/:destination - Destination photos`);
     console.log(`   POST /api/save-itinerary - Save and share itinerary`);
     console.log(`   GET  /api/shared/:id - Retrieve shared itinerary`);

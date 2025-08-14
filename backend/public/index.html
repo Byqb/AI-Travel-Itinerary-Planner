@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="AI Travel Planner">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="google-adsense-account" content="ca-pub-8025151941140662">
-    <title>AI Travel Planner v2.0 - Enhanced Edition</title>
+    <title>AI Travel Planner </title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles-enhanced.css">
     <link rel="stylesheet" href="styles-enhanced-glow.css">
@@ -83,7 +83,7 @@
     <div class="container">
         <div class="header">
             <h1 class="title">
-                🤖 AI Travel Planner v2.0
+                 AI Travel Planner
                 <span class="version-badge">Enhanced</span>
             </h1>
             <div class="header-controls">
@@ -107,17 +107,13 @@
         <!-- Feature Navigation Tabs -->
         <div class="feature-tabs">
             <button class="tab-button active" onclick="showTab('planning')" data-ar="التخطيط" data-en="Planning">التخطيط</button>
-            <button class="tab-button" onclick="showTab('weather')" data-ar="الطقس" data-en="Weather">الطقس</button>
-            <button class="tab-button" onclick="showTab('budget')" data-ar="الميزانية" data-en="Budget">الميزانية</button>
-            <button class="tab-button" onclick="showTab('packing')" data-ar="الحقائب" data-en="Packing">الحقائب</button>
             <button class="tab-button" onclick="showTab('photos')" data-ar="الصور" data-en="Photos">الصور</button>
-            <button class="tab-button" onclick="showTab('tips')" data-ar="النصائح" data-en="Tips">النصائح</button>
         </div>
 
         <div class="grid">
             <!-- Planning Tab -->
             <div id="planning-tab" class="tab-content active">
-                <!-- Enhanced Input Form Section -->
+                <!-- Enhanced Input Form Section with Chat UI -->
                 <div class="panel">
                     <h2 class="panel-title" data-ar="تفاصيل الرحلة" data-en="Trip Details">تفاصيل الرحلة</h2>
                     <form id="travelForm" onsubmit="generateItinerary(event)">
@@ -137,56 +133,17 @@
                                 <label class="form-label" data-ar="الوجهة" data-en="Destination">الوجهة</label>
                                 <input type="text" class="form-input" id="destination" data-ar-placeholder="مثال: باريس، فرنسا" data-en-placeholder="Example: Paris, France" placeholder="مثال: باريس، فرنسا" required>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label" data-ar="عدد المسافرين" data-en="Travelers">عدد المسافرين</label>
-                                <input type="number" class="form-input" id="travelers" min="1" max="10" value="1">
-                            </div>
                         </div>
+                        
 
                         <div class="form-group">
-                            <label class="form-label" data-ar="نوع الميزانية" data-en="Budget Type">نوع الميزانية</label>
-                            <select class="form-input" id="budgetType">
-                                <option value="budget" data-ar="اقتصادية" data-en="Budget">اقتصادية</option>
-                                <option value="medium" data-ar="متوسطة" data-en="Medium" selected>متوسطة</option>
-                                <option value="luxury" data-ar="فاخرة" data-en="Luxury">فاخرة</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" data-ar="الاهتمامات" data-en="Interests">الاهتمامات</label>
-                            <div class="preferences-group">
-                                <label class="preference-checkbox">
-                                    <input type="checkbox" name="preferences" value="food">
-                                    <span data-ar="الطعام" data-en="Food">الطعام</span>
-                                </label>
-                                <label class="preference-checkbox">
-                                    <input type="checkbox" name="preferences" value="culture">
-                                    <span data-ar="الثقافة" data-en="Culture">الثقافة</span>
-                                </label>
-                                <label class="preference-checkbox">
-                                    <input type="checkbox" name="preferences" value="adventure">
-                                    <span data-ar="المغامرة" data-en="Adventure">المغامرة</span>
-                                </label>
-                                <label class="preference-checkbox">
-                                    <input type="checkbox" name="preferences" value="shopping">
-                                    <span data-ar="التسوق" data-en="Shopping">التسوق</span>
-                                </label>
-                                <label class="preference-checkbox">
-                                    <input type="checkbox" name="preferences" value="nature">
-                                    <span data-ar="الطبيعة" data-en="Nature">الطبيعة</span>
-                                </label>
-                                <label class="preference-checkbox">
-                                    <input type="checkbox" name="preferences" value="history">
-                                    <span data-ar="التاريخ" data-en="History">التاريخ</span>
-                                </label>
-                                <label class="preference-checkbox">
-                                    <input type="checkbox" name="preferences" value="nightlife">
-                                    <span data-ar="الحياة الليلية" data-en="Nightlife">الحياة الليلية</span>
-                                </label>
-                                <label class="preference-checkbox">
-                                    <input type="checkbox" name="preferences" value="relaxation">
-                                    <span data-ar="الاسترخاء" data-en="Relaxation">الاسترخاء</span>
-                                </label>
+                            <label class="form-label" data-ar="الاهتمامات (دردشة)" data-en="Interests (Chat)">الاهتمامات (دردشة)</label>
+                            <div id="chat-container" class="card">
+                                <div id="chat-history" class="chat-history"></div>
+                                <form id="chat-form" class="chat-form" onsubmit="handlePlannerChat(event)">
+                                    <input type="text" id="chat-input" class="form-input" data-ar-placeholder="صف اهتماماتك مثل: المتاحف، الطعام المحلي، الطبيعة" data-en-placeholder="Describe interests like: museums, local food, nature" placeholder="صف اهتماماتك مثل: المتاحف، الطعام المحلي، الطبيعة" autocomplete="off" required>
+                                    <button type="submit" class="button primary" data-ar="إرسال" data-en="Send">إرسال</button>
+                                </form>
                             </div>
                         </div>
 
@@ -201,6 +158,7 @@
                 <div class="panel">
                     <div class="panel-header">
                         <h2 class="panel-title" data-ar="خطة الرحلة" data-en="Travel Plan">خطة الرحلة</h2>
+                        <div id="interests-badge" class="interests-badge" style="display:none"></div>
                         <div class="panel-actions" id="itinerary-actions" style="display: none;">
                             <button class="action-btn" onclick="shareItinerary()" title="Share">📤</button>
                             <button class="action-btn" onclick="saveItinerary()" title="Save">💾</button>
@@ -220,80 +178,6 @@
                 </div>
             </div>
 
-            <!-- Weather Tab -->
-            <div id="weather-tab" class="tab-content">
-                <div class="panel">
-                    <h2 class="panel-title" data-ar="توقعات الطقس" data-en="Weather Forecast">توقعات الطقس</h2>
-                    <div class="weather-input">
-                        <input type="text" id="weatherCity" class="form-input" data-ar-placeholder="ادخل اسم المدينة" data-en-placeholder="Enter city name" placeholder="ادخل اسم المدينة">
-                        <button onclick="getWeather()" class="button primary" data-ar="جلب الطقس" data-en="Get Weather">جلب الطقس</button>
-                    </div>
-                    <div id="weather-display" class="weather-display">
-                        <div class="weather-placeholder">
-                            <div class="weather-icon">🌤️</div>
-                            <p data-ar="أدخل اسم المدينة لمعرفة حالة الطقس" data-en="Enter a city name to get weather information">أدخل اسم المدينة لمعرفة حالة الطقس</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Budget Tab -->
-            <div id="budget-tab" class="tab-content">
-                <div class="panel">
-                    <h2 class="panel-title" data-ar="تقدير الميزانية" data-en="Budget Estimation">تقدير الميزانية</h2>
-                    <div class="budget-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label" data-ar="الوجهة" data-en="Destination">الوجهة</label>
-                                <input type="text" id="budgetDestination" class="form-input" data-ar-placeholder="وجهة السفر" data-en-placeholder="Travel destination" placeholder="وجهة السفر">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" data-ar="عدد الأيام" data-en="Days">عدد الأيام</label>
-                                <input type="number" id="budgetDays" class="form-input" min="1" value="7">
-                            </div>
-                        </div>
-                        <button onclick="calculateBudget()" class="button primary" data-ar="حساب الميزانية" data-en="Calculate Budget">حساب الميزانية</button>
-                    </div>
-                    <div id="budget-display" class="budget-display">
-                        <div class="budget-placeholder">
-                            <div class="budget-icon">💰</div>
-                            <p data-ar="احسب تقدير الميزانية لرحلتك" data-en="Calculate budget estimation for your trip">احسب تقدير الميزانية لرحلتك</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Packing Tab -->
-            <div id="packing-tab" class="tab-content">
-                <div class="panel">
-                    <h2 class="panel-title" data-ar="قائمة الحقائب" data-en="Packing List">قائمة الحقائب</h2>
-                    <div class="packing-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label" data-ar="الوجهة" data-en="Destination">الوجهة</label>
-                                <input type="text" id="packingDestination" class="form-input" data-ar-placeholder="وجهة السفر" data-en-placeholder="Travel destination" placeholder="وجهة السفر">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" data-ar="مدة الرحلة" data-en="Trip Duration">مدة الرحلة</label>
-                                <select id="packingDuration" class="form-input">
-                                    <option value="3" data-ar="1-3 أيام" data-en="1-3 days">1-3 أيام</option>
-                                    <option value="7" data-ar="أسبوع" data-en="1 week" selected>أسبوع</option>
-                                    <option value="14" data-ar="أسبوعين" data-en="2 weeks">أسبوعين</option>
-                                    <option value="30" data-ar="شهر" data-en="1 month">شهر</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button onclick="generatePackingList()" class="button primary" data-ar="إنشاء القائمة" data-en="Generate List">إنشاء القائمة</button>
-                    </div>
-                    <div id="packing-display" class="packing-display">
-                        <div class="packing-placeholder">
-                            <div class="packing-icon">🧳</div>
-                            <p data-ar="اإنشاء قائمة حقائب ذكية لرحلتك" data-en="Generate a smart packing list for your trip">إنشاء قائمة حقائب ذكية لرحلتك</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Photos Tab -->
             <div id="photos-tab" class="tab-content">
                 <div class="panel">
@@ -306,23 +190,6 @@
                         <div class="photos-placeholder">
                             <div class="photos-icon">📸</div>
                             <p data-ar="استكشف صور جميلة للوجهة" data-en="Explore beautiful photos of your destination">استكشف صور جميلة للوجهة</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tips Tab -->
-            <div id="tips-tab" class="tab-content">
-                <div class="panel">
-                    <h2 class="panel-title" data-ar="نصائح السفر" data-en="Travel Tips">نصائح السفر</h2>
-                    <div class="tips-input">
-                        <input type="text" id="tipsDestination" class="form-input" data-ar-placeholder="ادخل اسم الوجهة" data-en-placeholder="Enter destination name" placeholder="ادخل اسم الوجهة">
-                        <button onclick="getTips()" class="button primary" data-ar="جلب النصائح" data-en="Get Tips">جلب النصائح</button>
-                    </div>
-                    <div id="tips-display" class="tips-display">
-                        <div class="tips-placeholder">
-                            <div class="tips-icon">💡</div>
-                            <p data-ar="احصل على نصائح مفيدة للسفر" data-en="Get useful travel tips and advice">احصل على نصائح مفيدة للسفر</p>
                         </div>
                     </div>
                 </div>
@@ -391,9 +258,7 @@
                 <div class="footer-section">
                     <h4 data-ar="الميزات الجديدة" data-en="New Features">الميزات الجديدة</h4>
                     <ul>
-                        <li data-ar="توقعات الطقس" data-en="Weather Forecasts">توقعات الطقس</li>
-                        <li data-ar="تقدير الميزانية" data-en="Budget Estimation">تقدير الميزانية</li>
-                        <li data-ar="قوائم الحقائب الذكية" data-en="Smart Packing Lists">قوائم الحقائب الذكية</li>
+                        
                         <li data-ar="مساعد السفر الذكي" data-en="AI Travel Assistant">مساعد السفر الذكي</li>
                     </ul>
                 </div>
@@ -668,15 +533,82 @@
             document.getElementById('itinerary-actions').style.display = 'flex';
         }
 
+        // Planner Chat -> AI -> Update Travel Plan (global once)
+        let plannerChatId = null;
+        function appendPlannerChat(sender, text) {
+            const box = document.getElementById('chat-history');
+            if (!box) return;
+            const row = document.createElement('div');
+            row.className = `chat-row ${sender}`;
+            row.textContent = text;
+            box.appendChild(row);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function handlePlannerChat(event) {
+            event.preventDefault();
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            const isFirstMessage = !plannerChatId;
+            // Always treat this chat input as the authoritative interests list
+            const parsedInterests = text.includes(',') ? text.split(',').map(s => s.trim()).filter(Boolean) : [text];
+            window.currentInterests = parsedInterests;
+            const badgeEl = document.getElementById('interests-badge');
+            if (badgeEl) {
+                const list = parsedInterests.join(', ');
+                badgeEl.textContent = (document.documentElement.lang === 'ar' ? 'الاهتمامات: ' : 'Interests: ') + list;
+                badgeEl.style.display = list ? 'block' : 'none';
+            }
+            appendPlannerChat('user', text);
+            input.value = '';
+            appendPlannerChat('assistant', '…');
+
+            try {
+                const res = await fetch('/api/itinerary-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chatId: plannerChatId, message: text, language: document.documentElement.lang })
+                });
+                const data = await res.json();
+                const box = document.getElementById('chat-history');
+                if (box && box.lastChild) box.lastChild.textContent = data.reply || 'OK';
+                if (data.chatId) plannerChatId = data.chatId;
+                if (data.meta) {
+                    if (data.meta.destination) {
+                        const destEl = document.getElementById('destination');
+                        if (destEl) destEl.value = data.meta.destination;
+                        currentDestination = data.meta.destination;
+                    }
+                    if (data.meta.startDate) {
+                        const sd = document.getElementById('startDate');
+                        if (sd) sd.value = data.meta.startDate;
+                        tripStartDate = new Date(data.meta.startDate);
+                    }
+                    if (data.meta.endDate) {
+                        const ed = document.getElementById('endDate');
+                        if (ed) ed.value = data.meta.endDate;
+                    }
+                }
+                if (Array.isArray(data.itinerary)) {
+                    currentItinerary = data.itinerary;
+                    displayItinerary(data.itinerary);
+                }
+            } catch (err) {
+                const box = document.getElementById('chat-history');
+                if (box && box.lastChild) box.lastChild.textContent = '❌ Error contacting planner';
+            }
+        }
+
         async function generateItinerary(event) {
             event.preventDefault();
             
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
             const destination = document.getElementById('destination').value;
-            const travelers = document.getElementById('travelers').value;
-            const preferences = Array.from(document.querySelectorAll('input[name="preferences"]:checked'))
-                .map(cb => cb.value);
+            const preferences = Array.isArray(window.currentInterests)
+                ? window.currentInterests
+                : [];
 
             if (!startDate || !endDate || !destination) {
                 const currentLang = document.documentElement.lang;
@@ -704,7 +636,6 @@
                         endDate,
                         destination,
                         preferences,
-                        travelers: parseInt(travelers),
                         language: document.documentElement.lang
                     })
                 });
@@ -722,11 +653,8 @@
                 displayItinerary(data.itinerary);
                 
                 // Auto-populate other tabs
-                document.getElementById('weatherCity').value = destination;
-                document.getElementById('budgetDestination').value = destination;
-                document.getElementById('packingDestination').value = destination;
+                
                 document.getElementById('photosDestination').value = destination;
-                document.getElementById('tipsDestination').value = destination;
                 
             } catch (error) {
                 const currentLang = document.documentElement.lang;
@@ -748,7 +676,7 @@
             document.getElementById('startDate').value = today.toISOString().split('T')[0];
             document.getElementById('endDate').value = nextWeek.toISOString().split('T')[0];
             document.getElementById('destination').value = 'Paris, France';
-            document.getElementById('travelers').value = '2';
+            // travelers field removed
             
             // Check some preferences
             document.querySelector('input[value="culture"]').checked = true;
@@ -757,150 +685,7 @@
         }
 
         // Weather Functions
-        async function getWeather() {
-            const city = document.getElementById('weatherCity').value;
-            if (!city) return;
-            
-            const display = document.getElementById('weather-display');
-            display.innerHTML = '<div class="loading-small">Loading weather...</div>';
-            
-            try {
-                const response = await fetch(`/api/weather/${encodeURIComponent(city)}?language=${document.documentElement.lang}`);
-                const data = await response.json();
-                
-                if (!response.ok) throw new Error(data.error.message);
-                
-                display.innerHTML = `
-                    <div class="weather-current">
-                        <div class="weather-main">
-                            <div class="weather-temp">${data.current.temperature}°C</div>
-                            <div class="weather-desc">${data.current.description}</div>
-                        </div>
-                        <div class="weather-details">
-                            <div class="weather-detail">
-                                <span>💧</span>
-                                <span>${data.current.humidity}%</span>
-                            </div>
-                            <div class="weather-detail">
-                                <span>🌬️</span>
-                                <span>${data.current.windSpeed} km/h</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="weather-forecast">
-                        ${data.forecast.map(day => `
-                            <div class="forecast-day">
-                                <div class="forecast-date">${new Date(day.date).toLocaleDateString()}</div>
-                                <div class="forecast-temp">${day.temperature.min}° / ${day.temperature.max}°</div>
-                                <div class="forecast-desc">${day.description}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            } catch (error) {
-                display.innerHTML = `<div class="error-message">❌ ${error.message}</div>`;
-            }
-        }
-
-        // Budget Functions
-        async function calculateBudget() {
-            const destination = document.getElementById('budgetDestination').value;
-            const days = document.getElementById('budgetDays').value;
-            const travelers = document.getElementById('travelers').value || 1;
-            const budgetType = document.getElementById('budgetType').value;
-            
-            if (!destination || !days) return;
-            
-            const display = document.getElementById('budget-display');
-            display.innerHTML = '<div class="loading-small">Calculating budget...</div>';
-            
-            try {
-                const response = await fetch('/api/estimate-budget', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        destination,
-                        startDate: new Date().toISOString().split('T')[0],
-                        endDate: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        travelers: parseInt(travelers),
-                        budgetType
-                    })
-                });
-                
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error.message);
-                
-                display.innerHTML = `
-                    <div class="budget-summary">
-                        <h3>Total Budget: $${data.total}</h3>
-                        <p>${data.duration} days for ${data.travelers} traveler(s)</p>
-                    </div>
-                    <div class="budget-breakdown">
-                        ${Object.entries(data.breakdown).map(([category, costs]) => `
-                            <div class="budget-category">
-                                <span class="category-name">${category.charAt(0).toUpperCase() + category.slice(1)}</span>
-                                <span class="category-amount">$${costs.total}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            } catch (error) {
-                display.innerHTML = `<div class="error-message">❌ ${error.message}</div>`;
-            }
-        }
-
-        // Packing List Functions
-        async function generatePackingList() {
-            const destination = document.getElementById('packingDestination').value;
-            const duration = document.getElementById('packingDuration').value;
-            
-            if (!destination) return;
-            
-            const display = document.getElementById('packing-display');
-            display.innerHTML = '<div class="loading-small">Generating packing list...</div>';
-            
-            try {
-                const response = await fetch('/api/packing-list', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        destination,
-                        startDate: new Date().toISOString().split('T')[0],
-                        endDate: new Date(Date.now() + duration * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                        activities: [],
-                        language: document.documentElement.lang
-                    })
-                });
-                
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error.message);
-                
-                display.innerHTML = `
-                    <div class="packing-summary">
-                        <h3>${data.totalItems} Items for ${data.duration} days</h3>
-                        <p>${data.essentialItems} essential items</p>
-                    </div>
-                    <div class="packing-categories">
-                        ${Object.entries(data.packingList).map(([category, items]) => `
-                            <div class="packing-category">
-                                <h4>${category.charAt(0).toUpperCase() + category.slice(1)}</h4>
-                                <div class="packing-items">
-                                    ${items.map(item => `
-                                        <label class="packing-item ${item.importance}">
-                                            <input type="checkbox">
-                                            <span>${item.name}</span>
-                                            <span class="importance-badge">${item.importance}</span>
-                                        </label>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            } catch (error) {
-                display.innerHTML = `<div class="error-message">❌ ${error.message}</div>`;
-            }
-        }
+    // Removed Weather, Budget, Packing, and Tips features and related functions
 
         // Photos Functions
         async function getPhotos() {
@@ -944,43 +729,7 @@
             document.getElementById('photo-modal').style.display = 'none';
         }
 
-        // Travel Tips Functions
-        async function getTips() {
-            const destination = document.getElementById('tipsDestination').value;
-            if (!destination) return;
-            
-            const display = document.getElementById('tips-display');
-            display.innerHTML = '<div class="loading-small">Loading travel tips...</div>';
-            
-            try {
-                const response = await fetch('/api/travel-tips', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        destination,
-                        language: document.documentElement.lang
-                    })
-                });
-                
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error.message);
-                
-                display.innerHTML = `
-                    <div class="tips-categories">
-                        ${Object.entries(data.tips).map(([category, tips]) => `
-                            <div class="tips-category">
-                                <h4>${category.charAt(0).toUpperCase() + category.slice(1)} Tips</h4>
-                                <ul class="tips-list">
-                                    ${tips.map(tip => `<li>${tip}</li>`).join('')}
-                                </ul>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            } catch (error) {
-                display.innerHTML = `<div class="error-message">❌ ${error.message}</div>`;
-            }
-        }
+        
 
         // AI Assistant Functions
         function toggleAIAssistant() {
@@ -1109,7 +858,7 @@
                         destination: currentDestination,
                         startDate: document.getElementById('startDate').value,
                         endDate: document.getElementById('endDate').value,
-                        preferences: Array.from(document.querySelectorAll('input[name="preferences"]:checked')).map(cb => cb.value),
+                        preferences: Array.isArray(window.currentInterests) ? window.currentInterests : Array.from(document.querySelectorAll('input[name="preferences"]:checked')).map(cb => cb.value),
                         language: document.documentElement.lang
                     })
                 });

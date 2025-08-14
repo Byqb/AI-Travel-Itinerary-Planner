@@ -10,18 +10,7 @@ A powerful, feature-rich AI-powered travel planning application that helps users
 - Customizable based on preferences, dates, and interests
 - Support for multiple languages (Arabic & English)
 
-### 🌤️ Weather Integration
-
-- Real-time weather forecasts for destinations
-- 5-day weather outlook
-- Temperature, humidity, and wind speed information
-
-### 💰 Smart Budget Estimation
-
-- Automatic budget calculation based on destination and preferences
-- Three budget tiers: Budget, Medium, Luxury
-- Detailed breakdown by category (accommodation, food, transport, activities)
-- Multi-traveler support
+<!-- Removed features: Weather Integration, Budget Estimation -->
 
 ### 📸 Destination Photo Gallery
 
@@ -29,18 +18,9 @@ A powerful, feature-rich AI-powered travel planning application that helps users
 - High-quality images with photographer credits
 - Interactive photo viewer with modal display
 
-### 🧳 Intelligent Packing Lists
+<!-- Removed feature: Intelligent Packing Lists -->
 
-- AI-generated packing lists based on destination and activities
-- Categorized items (clothing, toiletries, electronics, documents, health)
-- Interactive checklist functionality
-
-### 🎯 Travel Tips & Advice
-
-- Cultural tips and local customs
-- Safety and security advice
-- Money and budget tips
-- Health and wellness recommendations
+<!-- Removed feature: Travel Tips & Advice -->
 
 ### 🔗 Share & Collaborate
 
@@ -96,8 +76,6 @@ A powerful, feature-rich AI-powered travel planning application that helps users
 ### APIs & Services
 
 - OpenRouter AI (Gemini 2.0 Flash) for itinerary generation
-- OpenWeatherMap API for weather data (configurable)
-- ExchangeRate API for currency conversion (configurable)
 - Unsplash API for destination photos (configurable)
 
 ## 📁 Project Structure
@@ -137,12 +115,11 @@ AI-Travel-Itinerary-Planner/
    npm install
    ```
 
-4. **Configure API Keys (Optional)**
-   Update the following in `server.js`:
+4. **Configure API Keys**
+   Create a `.env` file in `backend/` and set:
 
-   - OpenWeatherMap API key for real weather data
-   - ExchangeRate API key for real currency conversion
-   - Unsplash API key for real destination photos
+   - `API_KEY` for OpenRouter
+   - (Optional) `APP_URL`
 
 5. **Start the server**
 
@@ -160,13 +137,8 @@ AI-Travel-Itinerary-Planner/
 - `POST /api/generate-itinerary` - Generate AI travel itinerary
 - `GET /api/health` - Server health check
 
-### Enhanced Features
+### Additional Features
 
-- `GET /api/weather/:city` - Get weather forecast
-- `GET /api/currency/:from/:to` - Currency conversion rates
-- `POST /api/estimate-budget` - Budget estimation
-- `POST /api/packing-list` - Generate packing list
-- `POST /api/travel-tips` - Get travel tips
 - `GET /api/photos/:destination` - Destination photos
 - `POST /api/save-itinerary` - Save and share itinerary
 - `GET /api/shared/:id` - Retrieve shared itinerary
@@ -175,8 +147,7 @@ AI-Travel-Itinerary-Planner/
 
 1. **Plan Your Trip**
 
-   - Enter travel dates, destination, and number of travelers
-   - Select budget type (Budget/Medium/Luxury)
+   - Enter travel dates and destination
    - Choose your interests and preferences
 
 2. **Generate Itinerary**
@@ -186,10 +157,7 @@ AI-Travel-Itinerary-Planner/
 
 3. **Explore Additional Features**
 
-   - Check weather forecasts for your destination
-   - Review budget estimates and cost breakdowns
    - Browse destination photo galleries
-   - Read cultural and safety travel tips
 
 4. **Organize Your Trip**
 
@@ -197,18 +165,14 @@ AI-Travel-Itinerary-Planner/
    - Monitor trip countdown timer
    - Access travel document checklist
 
-5. **Share Your Plans**
+5. **Share Your Plan**
    - Save your itinerary with a shareable link
    - Share via social media or direct messaging
    - Export to PDF for offline access
 
 ## 🌟 What's New in v2.0
 
-- ✅ Weather forecasts and climate information
-- ✅ Smart budget estimation with detailed breakdowns
 - ✅ Interactive destination photo galleries
-- ✅ AI-generated packing lists
-- ✅ Comprehensive travel tips and advice
 - ✅ Itinerary sharing and collaboration
 - ✅ Trip countdown timer
 - ✅ Enhanced mobile responsiveness
