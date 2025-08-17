@@ -191,7 +191,7 @@ Return JSON only in this exact shape:
 Important:
 - The time values must be exactly: "Morning", "Midday", "End of day".
 - Each title must be exactly one bracketed interest from: [${interests}]. No extra words.
-- description must be null (or an empty string) for every activity.
+- Keep descriptions short and useful.
 `);
 }
 
@@ -208,6 +208,96 @@ function requireAuth(req, res, next) {
 
 async function getUserById(userId) {
     return await getAsync('SELECT id, email, name, created_at as createdAt FROM users WHERE id = ?', [userId]);
+}
+
+// --- Model compatibility helpers ---
+function supportsSystemRole(modelName) {
+    try { return !/(gemma-3n|gemini)/i.test(String(modelName || '')); } catch { return true; }
+}
+
+function buildMessages({ system, history = [], userMessage, planContext = '' }) {
+    const canUseSystem = supportsSystemRole(MODEL);
+    if (canUseSystem) {
+        const pre = [{ role: 'system', content: system }];
+        if (planContext) pre.push({ role: 'system', content: planContext });
+        return [...pre, ...history, { role: 'user', content: userMessage }];
+    }
+    const parts = [ 'Instructions:', system ];
+    if (planContext) parts.push(planContext);
+    const combined = parts.join('\n\n') + '\n\nUser:\n' + (userMessage || '');
+    return [ ...history, { role: 'user', content: combined } ];
+}
+
+function normalizeItinerary(itinerary, interests = []) {
+    try {
+        const interestsSet = new Set((interests || []).map(s => String(s || '').trim()).filter(Boolean));
+        const order = ['Morning','Midday','End of day'];
+        const mapped = (Array.isArray(itinerary) ? itinerary : []).map(day => ({
+            day: Number(day.day) || 1,
+            activities: Array.isArray(day.activities) ? day.activities.map(a => {
+                let title = String(a.title || '').trim();
+                const m = title.match(/\[(.*?)\]/);
+                let tag = m ? m[1].trim() : '';
+                if (!tag && interestsSet.size) {
+                    for (const i of interestsSet) { if (title.toLowerCase().includes(String(i).toLowerCase())) { tag = i; break; } }
+                }
+                if (tag) title = `[${tag}]`;
+                let time = a.time; const t = (time || '').toString().toLowerCase();
+                if (t.includes('morning') || t.includes('صباح')) time = 'Morning';
+                else if (t.includes('midday') || t.includes('منتصف') || t.includes('ظهر')) time = 'Midday';
+                else if (t.includes('end of day') || t.includes('مساء') || t.includes('ليل')) time = 'End of day';
+                const description = (typeof a.description === 'string') ? a.description.trim() : '';
+                return { title, description, time };
+            }) : []
+        })).map(day => {
+            const byTime = new Map();
+            for (const a of day.activities) { if (!byTime.has(a.time) && order.includes(a.time)) byTime.set(a.time, a); }
+            const missing = order.filter(k => !byTime.has(k));
+            if (missing.length) {
+                const tags = Array.from(interestsSet); let idx = 0;
+                for (const k of missing) { const tag = tags.length ? tags[idx % tags.length] : 'interest'; byTime.set(k, { title: `[${tag}]`, description: '', time: k }); idx++; }
+            }
+            return { day: day.day, activities: order.map(k => byTime.get(k)).filter(Boolean) };
+        });
+        return mapped;
+    } catch { return Array.isArray(itinerary) ? itinerary : []; }
+}
+
+function ymd(date) {
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${dd}`;
+}
+
+function addDays(dateStr, n) {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    d.setDate(d.getDate() + Number(n||0));
+    return ymd(d);
+}
+
+function parsePlanFromRow(itRow) {
+    let plan = {};
+    try { plan = itRow.plan_json ? JSON.parse(itRow.plan_json) : {}; } catch {}
+    const meta = plan.meta || { destination: itRow.destination || '', startDate: itRow.start_date || '', endDate: itRow.end_date || '', interests: [] };
+    const itinerary = Array.isArray(plan.itinerary) ? plan.itinerary : [];
+    return { plan: { reply: plan.reply || '', meta, itinerary }, interests: meta.interests || [] };
+}
+
+function buildBlankDay(dayNumber, interests = []) {
+    const tags = Array.isArray(interests) ? interests : [];
+    const pick = (i) => (tags.length ? tags[i % tags.length] : 'interest');
+    return {
+        day: Number(dayNumber) || 1,
+        activities: [
+            { title: `[${pick(0)}]`, description: '', time: 'Morning' },
+            { title: `[${pick(1)}]`, description: '', time: 'Midday' },
+            { title: `[${pick(2)}]`, description: '', time: 'End of day' }
+        ]
+    };
 }
 
 // Auth routes
@@ -415,7 +505,7 @@ router.post("/generate-itinerary", async (req, res) => {
             const missing = order.filter(k => !byTime.has(k));
             if (missing.length) {
                 const tags = Array.from(interestsSet); let idx = 0;
-                for (const k of missing) { const tag = tags.length ? tags[idx % tags.length] : 'interest'; byTime.set(k, { title: `[${tag}]`, description: null, time: k }); idx++; }
+                for (const k of missing) { const tag = tags.length ? tags[idx % tags.length] : 'interest'; byTime.set(k, { title: `[${tag}]`, description: '', time: k }); idx++; }
             }
             return { day: day.day, activities: order.map(k => byTime.get(k)).filter(Boolean) };
         });
@@ -438,7 +528,7 @@ router.post("/generate-itinerary", async (req, res) => {
                 for (const k of order) {
                     if (!byTime2.has(k)) {
                         const tag = tags.length ? tags[padIdx % tags.length] : 'interest';
-                        byTime2.set(k, { title: `[${tag}]`, description: null, time: k });
+                        byTime2.set(k, { title: `[${tag}]`, description: '', time: k });
                         padIdx++;
                     }
                 }
@@ -448,7 +538,7 @@ router.post("/generate-itinerary", async (req, res) => {
                 const activities = order.map(k => {
                     const tag = tags.length ? tags[padIdx % tags.length] : 'interest';
                     padIdx++;
-                    return { title: `[${tag}]`, description: null, time: k };
+                    return { title: `[${tag}]`, description: '', time: k };
                 });
                 normalized.push({ day: d, activities });
             }
@@ -564,7 +654,7 @@ Return JSON only in this shape and nothing else:
 {"reply": "Brief text", "meta": {"destination": string, "startDate": string, "endDate": string, "interests": string[]}, "itinerary": [{"day": number, "activities": [{"title": "[interest]", "description": "short description", "time": "Morning"}, {"title": "[interest]", "description": "short description", "time": "Midday"}, {"title": "[interest]", "description": "short description", "time": "End of day"}]}]}`
         );
 
-        const messages = [ { role: 'system', content: system }, ...session.history, { role: 'user', content: message } ];
+    const messages = buildMessages({ system, history: session.history, userMessage: message });
         const response = await axios.post(API_URL, { model: MODEL, messages }, { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${API_KEY}`, 'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000', 'X-Title': 'itinerary-chat' }, timeout: 30000 });
 
         const content = response.data?.choices?.[0]?.message?.content || '';
@@ -599,7 +689,7 @@ Return JSON only in this shape and nothing else:
                     const missing = order.filter(k => !byTime.has(k));
                     if (missing.length) {
                         const tags = Array.from(interestsSet); let idx = 0;
-                        for (const k of missing) { const tag = tags.length ? tags[idx % tags.length] : 'interest'; byTime.set(k, { title: `[${tag}]`, description: null, time: k }); idx++; }
+                        for (const k of missing) { const tag = tags.length ? tags[idx % tags.length] : 'interest'; byTime.set(k, { title: `[${tag}]`, description: '', time: k }); idx++; }
                     }
                     return { day: day.day, activities: order.map(k => byTime.get(k)).filter(Boolean) };
                 });
@@ -658,8 +748,8 @@ Return JSON only in this shape:
 
         // Include current plan JSON as context to guide edits
         const currentPlanJson = it.plan_json ? JSON.stringify(JSON.parse(it.plan_json), null, 0) : '';
-        const planContextMsg = currentPlanJson ? [{ role: 'system', content: (isArabic ? 'الخطة الحالية:' : 'Current plan:') + ' ' + currentPlanJson }] : [];
-        const messages = [ { role: 'system', content: system }, ...planContextMsg, ...history, { role: 'user', content: message } ];
+    const planContextText = currentPlanJson ? (isArabic ? 'الخطة الحالية:' : 'Current plan:') + ' ' + currentPlanJson : '';
+    const messages = buildMessages({ system, history, userMessage: message, planContext: planContextText });
 
         // Persist user message first
         await runAsync('INSERT INTO messages (itinerary_id, role, content, created_at) VALUES (?,?,?,?)', [id, 'user', message, new Date().toISOString()]);
@@ -676,7 +766,18 @@ Return JSON only in this shape:
         if (payload && typeof payload === 'object') {
             if (typeof payload.reply === 'string') replyText = payload.reply;
             if (Array.isArray(payload.itinerary)) {
-                itineraryPlan = payload;
+                // Normalize and rebuild full plan object
+                const normalized = normalizeItinerary(payload.itinerary, (payload.meta && payload.meta.interests) || []);
+                itineraryPlan = {
+                    reply: payload.reply || '',
+                    meta: {
+                        destination: payload.meta?.destination || JSON.parse(it.plan_json || '{}')?.meta?.destination || it.destination || '',
+                        startDate: payload.meta?.startDate || it.start_date || '',
+                        endDate: payload.meta?.endDate || it.end_date || '',
+                        interests: Array.isArray(payload.meta?.interests) ? payload.meta.interests : (JSON.parse(it.plan_json || '{}')?.meta?.interests || [])
+                    },
+                    itinerary: normalized
+                };
             }
         }
         if (!replyText) replyText = isArabic ? 'تم التحديث.' : 'Updated.';
@@ -697,8 +798,8 @@ Return JSON only in this shape:
         }
 
         const msgs = await allAsync('SELECT id, role, content, created_at as createdAt FROM messages WHERE itinerary_id = ? ORDER BY id ASC', [id]);
-        const updated = await getAsync('SELECT plan_json FROM itineraries WHERE id = ?', [id]);
-        res.json({ reply: replyText, messages: msgs, plan: updated?.plan_json ? JSON.parse(updated.plan_json) : null });
+    const updated = await getAsync('SELECT plan_json FROM itineraries WHERE id = ?', [id]);
+    res.json({ reply: replyText, messages: msgs, plan: updated?.plan_json ? JSON.parse(updated.plan_json) : null });
     } catch (error) {
         console.error('Itinerary Persisted Chat Error:', error.response?.data || error.message);
         res.status(500).json({ error: { message: 'Chat service error' } });
@@ -712,6 +813,76 @@ router.get('/itineraries/:id/versions', requireAuth, async (req, res) => {
         if (!it) return res.status(404).json({ error: { message: 'Not found' } });
         const rows = await allAsync('SELECT id, version_number as version, created_at as createdAt FROM itinerary_versions WHERE itinerary_id = ? ORDER BY version_number ASC', [req.params.id]);
         res.json({ versions: rows });
+    } catch (err) {
+        res.status(500).json({ error: { message: err.message } });
+    }
+});
+
+// Add a day to an itinerary (position: end|after|before with day)
+router.post('/itineraries/:id/days', requireAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { position = 'end', day = null } = req.body || {};
+        const it = await getAsync('SELECT * FROM itineraries WHERE id = ? AND user_id = ?', [id, req.session.userId]);
+        if (!it) return res.status(404).json({ error: { message: 'Itinerary not found' } });
+
+        const { plan, interests } = parsePlanFromRow(it);
+        const items = normalizeItinerary(plan.itinerary, interests);
+        const currentCount = items.length;
+        let insertIndex = currentCount; // default append
+        if ((position === 'after' || position === 'before') && Number(day)) {
+            const base = Math.max(1, Math.min(Number(day), Math.max(1, currentCount)));
+            insertIndex = position === 'after' ? base : (base - 1);
+        }
+        const newItems = items.slice();
+        newItems.splice(insertIndex, 0, buildBlankDay(insertIndex + 1, interests));
+        // Renumber
+        const renumbered = newItems.map((d, i) => ({ ...d, day: i + 1 }));
+        // Update meta endDate if contiguous
+        const newCount = renumbered.length;
+        const newEnd = it.start_date ? addDays(it.start_date, newCount - 1) : (plan.meta.endDate || '');
+
+        const newPlan = { reply: plan.reply || '', meta: { ...plan.meta, startDate: it.start_date || plan.meta.startDate || '', endDate: newEnd }, itinerary: renumbered };
+        const now = new Date().toISOString();
+        await runAsync('UPDATE itineraries SET plan_json = ?, end_date = ?, updated_at = ? WHERE id = ?', [JSON.stringify(newPlan), newEnd, now, id]);
+        const v = await getAsync('SELECT MAX(version_number) as maxv FROM itinerary_versions WHERE itinerary_id = ?', [id]);
+        const nextV = (v && v.maxv ? Number(v.maxv) : 0) + 1;
+        await runAsync('INSERT INTO itinerary_versions (itinerary_id, version_number, plan_json, created_at) VALUES (?,?,?,?)', [id, nextV, JSON.stringify(newPlan), now]);
+
+        res.json({ ok: true, plan: newPlan });
+    } catch (err) {
+        res.status(500).json({ error: { message: err.message } });
+    }
+});
+
+// Remove a day from an itinerary (by day number)
+router.delete('/itineraries/:id/days/:day', requireAuth, async (req, res) => {
+    try {
+        const { id, day } = req.params;
+        const removeDay = Number(day);
+        if (!removeDay || removeDay < 1) return res.status(400).json({ error: { message: 'Invalid day' } });
+        const it = await getAsync('SELECT * FROM itineraries WHERE id = ? AND user_id = ?', [id, req.session.userId]);
+        if (!it) return res.status(404).json({ error: { message: 'Itinerary not found' } });
+
+        const { plan, interests } = parsePlanFromRow(it);
+        const items = normalizeItinerary(plan.itinerary, interests);
+        if (!items.length) return res.status(400).json({ error: { message: 'No days to remove' } });
+        const idx = Math.min(Math.max(1, removeDay), items.length) - 1;
+        const newItems = items.slice(0, idx).concat(items.slice(idx + 1));
+        // Renumber
+        const renumbered = newItems.map((d, i) => ({ ...d, day: i + 1 }));
+        const newCount = renumbered.length;
+        // Update endDate
+        const newEnd = it.start_date ? addDays(it.start_date, Math.max(0, newCount - 1)) : (plan.meta.endDate || '');
+
+        const newPlan = { reply: plan.reply || '', meta: { ...plan.meta, startDate: it.start_date || plan.meta.startDate || '', endDate: newEnd }, itinerary: renumbered };
+        const now = new Date().toISOString();
+        await runAsync('UPDATE itineraries SET plan_json = ?, end_date = ?, updated_at = ? WHERE id = ?', [JSON.stringify(newPlan), newEnd, now, id]);
+        const v = await getAsync('SELECT MAX(version_number) as maxv FROM itinerary_versions WHERE itinerary_id = ?', [id]);
+        const nextV = (v && v.maxv ? Number(v.maxv) : 0) + 1;
+        await runAsync('INSERT INTO itinerary_versions (itinerary_id, version_number, plan_json, created_at) VALUES (?,?,?,?)', [id, nextV, JSON.stringify(newPlan), now]);
+
+        res.json({ ok: true, plan: newPlan });
     } catch (err) {
         res.status(500).json({ error: { message: err.message } });
     }
